@@ -3,112 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    
-    <!-- Updated App Name and 2 of Spades Icon -->
     <title>Big 2</title>
     <link rel="apple-touch-icon" href="https://img.freepik.com/premium-vector/two-spades-playing-card-isolated-black-background_1029473-58133.jpg?w=360">
     <meta name="apple-mobile-web-app-title" content="Big 2">
-    
     <style>
         * { box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            padding: 15px; 
-            background: #000; 
-            color: #fff; 
-            font-size: 20px; 
-            margin: 0;
-        }
-        .container { 
-            width: 100%;
-            max-width: 600px; 
-            margin: auto; 
-            background: #111; 
-            padding: 15px; 
-            border-radius: 15px; 
-            border: 1px solid #333; 
-        }
-        h1 { color: #ffcc00; font-size: 42px; text-align: center; margin: 10px 0; }
-        h2 { color: #4bb5ff; font-size: 28px; margin-top: 30px; border-bottom: 1px solid #333; }
+        body { font-family: -apple-system, sans-serif; padding: 10px; background: #000; color: #fff; margin: 0; font-size: 16px; }
+        .container { max-width: 500px; margin: auto; background: #111; padding: 12px; border-radius: 12px; border: 1px solid #333; }
         
-        .setup-box { background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
-        .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        h1 { color: #ffcc00; font-size: 28px; text-align: center; margin: 5px 0; }
+        
+        /* Compact Setup Row */
+        .setup-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 10px; background: #1a1a1a; padding: 8px; border-radius: 8px; }
+        .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         
         input, select { 
-            width: 100%;
-            padding: 14px; 
-            font-size: 22px; 
-            border-radius: 8px; 
-            border: 2px solid #444; 
-            background: #fff; 
-            color: #000; 
-            font-weight: bold;
-            -webkit-appearance: none;
+            width: 100%; padding: 8px; font-size: 16px; border-radius: 6px; 
+            border: 1px solid #444; background: #fff; color: #000; font-weight: bold;
         }
 
-        .player-card { 
-            background: #222;
-            border: 2px solid #444; 
-            padding: 15px; 
-            margin-bottom: 15px;
-            border-radius: 10px;
-        }
+        /* Compact History Selector */
+        .history-box { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .history-box label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; }
+
+        /* Compact Player Cards */
+        #player-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .player-card { background: #222; border: 1px solid #444; padding: 8px; border-radius: 8px; position: relative; }
         .winner-card { border-color: #4caf50; background: #0e2110; }
-        .row-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .player-card strong { font-size: 14px; display: block; margin-bottom: 5px; }
+        .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .card-row label { font-size: 10px; color: #aaa; }
+        .card-row input { padding: 5px; font-size: 14px; }
 
         button { 
-            width: 100%; 
-            padding: 22px; 
-            font-size: 26px; 
-            background: #0070f3; 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: bold; 
-            margin-top: 15px;
-            box-shadow: 0 4px 0 #004aab;
+            width: 100%; padding: 15px; font-size: 20px; background: #0070f3; 
+            color: white; border: none; border-radius: 10px; font-weight: bold; margin-top: 10px;
         }
-        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #004aab; }
-        .secondary-btn { background: #b91c1c; margin-top: 50px; font-size: 18px; box-shadow: 0 4px 0 #7a1212; }
+        .secondary-btn { background: #b91c1c; margin-top: 20px; font-size: 14px; padding: 10px; }
 
-        .table-wrap { overflow-x: auto; margin-top: 25px; }
-        table { width: 100%; border-collapse: collapse; min-width: 400px; }
-        th, td { padding: 12px; border: 1px solid #333; text-align: center; font-size: 20px; }
+        .table-wrap { overflow-x: auto; margin-top: 15px; background: #000; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 6px; border: 1px solid #333; text-align: center; }
         th { background: #222; color: #ffcc00; }
-        .money { color: #00ff00; font-weight: bold; }
-        .debt { color: #ff4d4d; font-weight: bold; }
+        .money { color: #00ff00; } .debt { color: #ff4d4d; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Big 2</h1>
-        <div id="session-date" style="text-align:center; color:#888; font-size:16px;">Connecting...</div>
+
+        <div class="history-box">
+            <label>Past Sessions (MPS Style History)</label>
+            <select id="session-selector" onchange="switchSession()">
+                <option value="new">-- Start New Session --</option>
+            </select>
+        </div>
         
-        <div class="setup-box">
-            <div class="input-group">
-                <label>Value Per Point ($)</label>
+        <div class="setup-row">
+            <div>
+                <label style="font-size:10px">$/Point</label>
                 <input type="number" id="point_val" value="1.00" step="0.10" onchange="syncToFirebase()">
             </div>
-            <div class="input-group">
-                <label>Players</label>
-                <div class="name-grid">
-                    <input type="text" id="n1" placeholder="P1" onchange="syncToFirebase()">
-                    <input type="text" id="n2" placeholder="P2" onchange="syncToFirebase()">
-                    <input type="text" id="n3" placeholder="P3" onchange="syncToFirebase()">
-                    <input type="text" id="n4" placeholder="P4" onchange="syncToFirebase()">
-                </div>
+            <div class="name-grid">
+                <input type="text" id="n1" placeholder="P1" onchange="syncToFirebase()">
+                <input type="text" id="n2" placeholder="P2" onchange="syncToFirebase()">
+                <input type="text" id="n3" placeholder="P3" onchange="syncToFirebase()">
+                <input type="text" id="n4" placeholder="P4" onchange="syncToFirebase()">
             </div>
         </div>
 
-        <h2>Current Hand</h2>
-        <div class="input-group">
-            <label>Winner</label>
-            <select id="winner_idx" onchange="renderInputs()">
-                <option value="0">Player 1</option>
-                <option value="1">Player 2</option>
-                <option value="2">Player 3</option>
-                <option value="3">Player 4</option>
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <span style="font-size:14px; color:#4bb5ff">Winner:</span>
+            <select id="winner_idx" style="width:60%; padding:5px" onchange="renderInputs()">
+                <option value="0">Player 1</option><option value="1">Player 2</option>
+                <option value="2">Player 3</option><option value="3">Player 4</option>
             </select>
         </div>
         
@@ -124,12 +92,12 @@
             </table>
         </div>
 
-        <button class="secondary-btn" onclick="resetSession()">RESET ALL DATA</button>
+        <button class="secondary-btn" onclick="resetCurrentSession()">RESET CURRENT SESSION</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCh9aJZ_exqVOvUeWXXlxwEXONTDcK-0Pc",
@@ -143,15 +111,56 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const sessionRef = ref(db, 'current_session');
+        const allSessionsRef = ref(db, 'sessions');
+        
+        let currentSessionId = localStorage.getItem('lastSessionId') || null;
+        let sessionData = { pointValue: 1.0, names: ["P1", "P2", "P3", "P4"], totals: [0,0,0,0], history: [] };
 
-        let sessionData = {
-            startTime: new Date().toLocaleString(),
-            pointValue: 1.0,
-            names: ["P1", "P2", "P3", "P4"],
-            totals: [0, 0, 0, 0],
-            history: []
+        // Load History List
+        onValue(allSessionsRef, (snapshot) => {
+            const sessions = snapshot.val();
+            const selector = document.getElementById('session-selector');
+            selector.innerHTML = '<option value="new">-- Start New Session --</option>';
+            
+            if (sessions) {
+                Object.keys(sessions).reverse().forEach(id => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.text = sessions[id].startTime || id;
+                    if(id === currentSessionId) option.selected = true;
+                    selector.appendChild(option);
+                });
+            }
+        });
+
+        window.switchSession = function() {
+            const val = document.getElementById('session-selector').value;
+            if (val === "new") {
+                const newId = new Date().toLocaleString().replace(/[/, :]/g, '-');
+                currentSessionId = newId;
+                sessionData = { startTime: new Date().toLocaleString(), pointValue: 1.0, names: ["P1", "P2", "P3", "P4"], totals: [0,0,0,0], history: [] };
+                saveAndRefetch();
+            } else {
+                currentSessionId = val;
+                saveAndRefetch();
+            }
+            localStorage.setItem('lastSessionId', currentSessionId);
         };
+
+        function saveAndRefetch() {
+            if (!currentSessionId) return;
+            const currentRef = ref(db, 'sessions/' + currentSessionId);
+            onValue(currentRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    sessionData = data;
+                    document.getElementById('point_val').value = sessionData.pointValue;
+                    sessionData.names.forEach((n, i) => document.getElementById('n' + (i + 1)).value = n);
+                    updateLedgerUI();
+                    renderInputs();
+                }
+            });
+        }
 
         window.renderInputs = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
@@ -160,130 +169,62 @@
                 const isWin = i === winIdx;
                 html += `
                 <div class="player-card ${isWin ? 'winner-card' : ''}">
-                    <strong style="font-size:24px">${sessionData.names[i]} ${isWin ? '🏆' : ''}</strong>
-                    <div class="row-inputs">
-                        <div>
-                            <label style="font-size:14px">${isWin ? 'End 2s' : 'Cards'}</label>
-                            <input type="number" id="p${i}_${isWin ? 'w_twos' : 'cards'}" value="0">
-                        </div>
-                        <div>
-                            <label style="font-size:14px">Held 2s</label>
-                            <input type="number" id="p${i}_twos" value="0">
-                        </div>
-                    </div>
-                    <div style="margin-top:10px">
-                        <label style="font-size:14px">Bonus</label>
-                        <select id="p${i}_special">
-                            <option value="0">None</option>
-                            <option value="5">SF/4K (+5)</option>
-                            <option value="10">Royal (+10)</option>
-                        </select>
+                    <strong>${sessionData.names[i]} ${isWin ? '🏆' : ''}</strong>
+                    <div class="card-row">
+                        <div><label>${isWin ? 'End2' : 'Cards'}</label><input type="number" id="p${i}_val" value="0"></div>
+                        <div><label>Held2</label><input type="number" id="p${i}_twos" value="0"></div>
                     </div>
                 </div>`;
             }
             document.getElementById('player-inputs').innerHTML = html;
         };
 
-        onValue(sessionRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                sessionData = data;
-                document.getElementById('point_val').value = sessionData.pointValue;
-                sessionData.names.forEach((n, i) => { 
-                    const el = document.getElementById('n' + (i + 1));
-                    if(el) el.value = n;
-                });
-                document.getElementById('session-date').innerText = "Started: " + sessionData.startTime;
-            }
-            updateLedgerUI();
-            renderInputs();
-        });
-
         window.syncToFirebase = function() {
+            if (!currentSessionId) switchSession();
             sessionData.pointValue = parseFloat(document.getElementById('point_val').value) || 1.0;
             for(let i=0; i<4; i++) {
                 sessionData.names[i] = document.getElementById('n' + (i+1)).value || "P" + (i+1);
             }
-            set(sessionRef, sessionData);
+            set(ref(db, 'sessions/' + currentSessionId), sessionData);
         };
 
         window.calculateHand = function() {
+            if (!currentSessionId) switchSession();
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let handPoints = [0, 0, 0, 0];
-            let cards = [0, 0, 0, 0], twos = [0, 0, 0, 0], specials = [0, 0, 0, 0];
-
-            for(let i=0; i<4; i++) {
-                twos[i] = parseInt(document.getElementById(`p${i}_twos`).value) || 0;
-                specials[i] = parseInt(document.getElementById(`p${i}_special`).value) || 0;
-                if (i !== winIdx) cards[i] = parseInt(document.getElementById(`p${i}_cards`).value) || 0;
-            }
-
-            const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_w_twos`).value) || 0) * 5;
+            const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_val`).value) || 0) * 5;
 
             for(let i=0; i<4; i++) {
                 if(i !== winIdx) {
-                    let penalty = 5 + winTwosBonus + (twos[i] * 5);
+                    let twos = parseInt(document.getElementById(`p${i}_twos`).value) || 0;
+                    let penalty = 5 + winTwosBonus + (twos * 5);
                     handPoints[i] -= penalty;
                     handPoints[winIdx] += penalty;
                 }
             }
-
-            for(let i=0; i<4; i++) {
-                for(let j=0; j<4; j++) {
-                    if(cards[i] > cards[j]) {
-                        let diff = cards[i] - cards[j];
-                        handPoints[i] -= diff;
-                        handPoints[j] += diff;
-                    }
-                }
-            }
-
-            specials.forEach((pts, idx) => {
-                if(pts > 0) {
-                    for(let i=0; i<4; i++) {
-                        if(i !== idx) { handPoints[i] -= pts; handPoints[idx] += pts; }
-                    }
-                }
-            });
-
-            if (!sessionData.history) sessionData.history = [];
             sessionData.history.push(handPoints);
             handPoints.forEach((pts, i) => sessionData.totals[i] += pts);
-            set(sessionRef, sessionData);
+            syncToFirebase();
         };
 
         function updateLedgerUI() {
-            let head = `<tr><th>#</th>`;
-            sessionData.names.forEach(n => head += `<th>${n.substring(0,3)}</th>`);
-            document.getElementById('ledger-head').innerHTML = head + `</tr>`;
-
-            let bodyHtml = "";
-            if (sessionData.history) {
-                sessionData.history.forEach((hand, idx) => {
-                    bodyHtml += `<tr><td>${idx+1}</td>`;
-                    hand.forEach(pts => {
-                        let val = (pts * sessionData.pointValue).toFixed(2);
-                        bodyHtml += `<td class="${pts >= 0 ? 'money' : 'debt'}">${pts >= 0 ? '+' : ''}${val}</td>`;
-                    });
-                    bodyHtml += `</tr>`;
-                });
-            }
-            document.getElementById('ledger-body').innerHTML = bodyHtml;
-
-            let foot = `<tr><td><strong>Total</strong></td>`;
-            sessionData.totals.forEach(t => {
-                let val = (t * sessionData.pointValue).toFixed(2);
-                foot += `<td class="${t >= 0 ? 'money' : 'debt'}"><strong>${val}</strong></td>`;
-            });
-            document.getElementById('ledger-foot').innerHTML = foot + `</tr>`;
+            let head = `<tr><th>#</th>` + sessionData.names.map(n => `<th>${n.substring(0,3)}</th>`).join('') + `</tr>`;
+            document.getElementById('ledger-head').innerHTML = head;
+            document.getElementById('ledger-body').innerHTML = (sessionData.history || []).map((hand, idx) => 
+                `<tr><td>${idx+1}</td>` + hand.map(pts => `<td class="${pts >= 0 ? 'money' : 'debt'}">${(pts * sessionData.pointValue).toFixed(1)}</td>`).join('') + `</tr>`
+            ).join('');
+            document.getElementById('ledger-foot').innerHTML = `<tr><td><strong>Σ</strong></td>` + sessionData.totals.map(t => `<td class="${t >= 0 ? 'money' : 'debt'}"><strong>${(t * sessionData.pointValue).toFixed(1)}</strong></td>`).join('') + `</tr>`;
         }
 
-        window.resetSession = function() {
-            if(confirm("Wipe all data?")) set(sessionRef, null).then(() => location.reload());
+        window.resetCurrentSession = function() {
+            if(confirm("Clear this session?")) {
+                sessionData.history = [];
+                sessionData.totals = [0,0,0,0];
+                syncToFirebase();
+            }
         };
 
-        renderInputs();
-        updateLedgerUI();
+        if(currentSessionId) saveAndRefetch();
     </script>
 </body>
 </html>
