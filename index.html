@@ -2,124 +2,191 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Big 2 Cut-Throat Scorer</title>
+    <title>Big 2 Pro Scorer</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
-        .container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h1 { text-align: center; color: #4bb5ff; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
+        .container { max-width: 700px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; }
+        h1, h2 { text-align: center; color: #4bb5ff; }
+        .setup-box { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
         .player-row { border-bottom: 1px solid #333; padding: 15px 0; }
-        .player-row:last-child { border: none; }
         .input-group { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
-        input[type="number"] { width: 60px; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; }
-        .bonus-group { font-size: 0.9em; color: #aaa; }
-        button { width: 100%; padding: 15px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        button:hover { background: #005bc1; }
-        #result { margin-top: 25px; padding: 15px; border-radius: 8px; background: #252525; }
-        .winner { color: #4caf50; font-weight: bold; }
-        .loser { color: #f44336; }
+        input { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; }
+        .card-input { width: 60px; }
+        .name-input { width: 120px; }
+        button { width: 100%; padding: 12px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .secondary-btn { background: #444; margin-top: 5px; }
+        #ledger { margin-top: 25px; width: 100%; border-collapse: collapse; }
+        #ledger th, #ledger td { padding: 10px; border: 1px solid #333; text-align: center; }
+        .money { color: #4caf50; font-weight: bold; }
+        .debt { color: #f44336; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Big 2 Cut-Throat</h1>
+        <h1>Big 2 Session Manager</h1>
         
-        <!-- Player 1 (Assuming Winner) -->
-        <div class="player-row">
+        <div class="setup-box" id="initial-setup">
+            <h3>Session Settings</h3>
             <div class="input-group">
-                <strong>Winner (P1)</strong>
-                <span>Last move 2s: <input type="number" id="w_twos" value="0" min="0" max="4"></span>
+                Value per Point ($): <input type="number" id="point_val" value="1.00" step="0.10">
             </div>
-            <div class="bonus-group">
-                Special Hand: 
+            <div class="input-group">
+                Names: 
+                <input type="text" id="n1" placeholder="P1 Name" class="name-input" value="Player 1">
+                <input type="text" id="n2" placeholder="P2 Name" class="name-input" value="Player 2">
+                <input type="text" id="n3" placeholder="P3 Name" class="name-input" value="Player 3">
+                <input type="text" id="n4" placeholder="P4 Name" class="name-input" value="Player 4">
+            </div>
+        </div>
+
+        <div id="game-input">
+            <h2>Current Hand</h2>
+            <div class="player-row">
+                <strong>Winner: <span id="disp_n1">P1</span></strong>
+                <span>Last move 2s: <input type="number" id="w_twos" value="0" class="card-input"></span>
                 <select id="w_special">
-                    <option value="0">None</option>
-                    <option value="5">Straight Flush / 4-Kind (+5)</option>
+                    <option value="0">No Bonus</option>
+                    <option value="5">SF/4K (+5)</option>
                     <option value="10">Royal Flush (+10)</option>
                 </select>
             </div>
+            <div id="losers-list"></div>
         </div>
 
-        <!-- Losers -->
-        <div id="losers-area">
-            <!-- P2, P3, P4 generated here -->
-            <script>
-                for(let i=2; i<=4; i++) {
-                    document.write(`
-                    <div class="player-row">
-                        <div class="input-group">
-                            <strong>Player ${i}</strong>
-                            <span>Cards Left: <input type="number" id="p${i}_cards" value="0" min="1"></span>
-                        </div>
-                        <div class="input-group bonus-group">
-                            <span>Holding 2s: <input type="number" id="p${i}_twos" value="0" min="0"></span>
-                            <span>Hand: <select id="p${i}_special">
-                                <option value="0">None</option>
-                                <option value="5">Str Flush / 4K (+5)</option>
-                                <option value="10">Royal Flush (+10)</option>
-                            </select></span>
-                        </div>
-                    </div>`);
-                }
-            </script>
+        <button onclick="calculateHand()">Submit Hand</button>
+        
+        <div id="session-summary">
+            <h2>Running Totals</h2>
+            <table id="ledger">
+                <thead>
+                    <tr id="ledger-names"></tr>
+                </thead>
+                <tbody id="ledger-body">
+                    <tr id="total-row"></tr>
+                </tbody>
+            </table>
+            <button class="secondary-btn" onclick="resetSession()">Reset Whole Session</button>
         </div>
-
-        <button onclick="calculateScores()">Calculate Payouts</button>
-        <div id="result"></div>
     </div>
 
     <script>
-        function calculateScores() {
-            let p1_bonus = parseInt(document.getElementById('w_special').value);
-            let w_twos_bonus = parseInt(document.getElementById('w_twos').value) * 5;
+        let totals = [0, 0, 0, 0];
+        let handCount = 0;
 
-            let players = [
-                { id: 1, cards: 0, twos: 0, special: p1_bonus, score: 0 },
-                { id: 2, cards: parseInt(document.getElementById('p2_cards').value) || 0, twos: parseInt(document.getElementById('p2_twos').value) || 0, special: parseInt(document.getElementById('p2_special').value), score: 0 },
-                { id: 3, cards: parseInt(document.getElementById('p3_cards').value) || 0, twos: parseInt(document.getElementById('p3_twos').value) || 0, special: parseInt(document.getElementById('p3_special').value), score: 0 },
-                { id: 4, cards: parseInt(document.getElementById('p4_cards').value) || 0, twos: parseInt(document.getElementById('p4_twos').value) || 0, special: parseInt(document.getElementById('p4_special').value), score: 0 }
+        function updateNames() {
+            for(let i=1; i<=4; i++) {
+                let name = document.getElementById('n' + i).value;
+                if(i === 1) document.getElementById('disp_n1').innerText = name;
+                document.querySelectorAll('.name-label-' + i).forEach(el => el.innerText = name);
+            }
+        }
+
+        function setupLosers() {
+            let html = "";
+            for(let i=2; i<=4; i++) {
+                html += `
+                <div class="player-row">
+                    <strong><span class="name-label-${i}">P${i}</span></strong>
+                    Cards: <input type="number" id="p${i}_cards" value="0" class="card-input">
+                    2s: <input type="number" id="p${i}_twos" value="0" class="card-input">
+                    <select id="p${i}_special">
+                        <option value="0">No Bonus</option>
+                        <option value="5">SF/4K (+5)</option>
+                        <option value="10">Royal Flush (+10)</option>
+                    </select>
+                </div>`;
+            }
+            document.getElementById('losers-list').innerHTML = html;
+        }
+
+        function calculateHand() {
+            updateNames();
+            let val = parseFloat(document.getElementById('point_val').value);
+            let w_twos_bonus = parseInt(document.getElementById('w_twos').value) * 5;
+            
+            let currentHandPoints = [0, 0, 0, 0];
+            let cards = [0, 
+                parseInt(document.getElementById('p2_cards').value) || 0,
+                parseInt(document.getElementById('p3_cards').value) || 0,
+                parseInt(document.getElementById('p4_cards').value) || 0
+            ];
+            let twos = [
+                0,
+                parseInt(document.getElementById('p2_twos').value) || 0,
+                parseInt(document.getElementById('p3_twos').value) || 0,
+                parseInt(document.getElementById('p4_twos').value) || 0
+            ];
+            let specials = [
+                parseInt(document.getElementById('w_special').value),
+                parseInt(document.getElementById('p2_special').value),
+                parseInt(document.getElementById('p3_special').value),
+                parseInt(document.getElementById('p4_special').value)
             ];
 
-            // 1. Base Ante (5) + Winner's 2s Penalty
-            players.forEach(p => {
-                if (p.id !== 1) {
-                    let penalty = 5 + w_twos_bonus + (p.twos * 5);
-                    p.score -= penalty;
-                    players[0].score += penalty;
-                }
-            });
+            // 1. Ante + Winner's 2s + Loser's 2s
+            for(let i=1; i<4; i++) {
+                let penalty = 5 + w_twos_bonus + (twos[i] * 5);
+                currentHandPoints[i] -= penalty;
+                currentHandPoints[0] += penalty;
+            }
 
-            // 2. Cut-Throat Comparison (Lesser Cards)
-            for (let i = 0; i < players.length; i++) {
-                for (let j = 0; j < players.length; j++) {
-                    if (players[i].cards > players[j].cards) {
-                        let diff = players[i].cards - players[j].cards;
-                        players[i].score -= diff;
-                        players[j].score += diff;
+            // 2. Cut-throat differences
+            for(let i=0; i<4; i++) {
+                for(let j=0; j<4; j++) {
+                    if(cards[i] > cards[j]) {
+                        let diff = cards[i] - cards[j];
+                        currentHandPoints[i] -= diff;
+                        currentHandPoints[j] += diff;
                     }
                 }
             }
 
-            // 3. Special Hand Bonuses (Played during game)
-            // Note: Simplistic approach where special hand value is paid by all other players
-            players.forEach(p => {
-                if (p.special > 0) {
-                    players.forEach(other => {
-                        if (p.id !== other.id) {
-                            other.score -= p.special;
-                            p.score += p.special;
+            // 3. Specials
+            specials.forEach((pts, idx) => {
+                if(pts > 0) {
+                    for(let i=0; i<4; i++) {
+                        if(i !== idx) {
+                            currentHandPoints[i] -= pts;
+                            currentHandPoints[idx] += pts;
                         }
-                    });
+                    }
                 }
             });
 
-            // Display
-            let resDiv = document.getElementById('result');
-            resDiv.innerHTML = "<h2>Results</h2>";
-            players.forEach(p => {
-                let colorClass = p.score >= 0 ? 'winner' : 'loser';
-                resDiv.innerHTML += `<p>Player ${p.id}: <span class="${colorClass}">${p.score > 0 ? '+' : ''}${p.score} points</span></p>`;
+            // Update Totals and Ledger
+            handCount++;
+            let table = document.getElementById('ledger-body');
+            let row = table.insertRow(table.rows.length - 1);
+            row.innerHTML = `<td>Hand ${handCount}</td>`;
+            
+            currentHandPoints.forEach((pts, i) => {
+                totals[i] += pts;
+                let cash = (pts * val).toFixed(2);
+                row.innerHTML += `<td class="${pts >= 0 ? 'money' : 'debt'}">$${cash}</td>`;
             });
+
+            updateTotalRow(val);
         }
+
+        function updateTotalRow(val) {
+            let namesHeader = document.getElementById('ledger-names');
+            namesHeader.innerHTML = "<th>Hand</th>";
+            let totalRow = document.getElementById('total-row');
+            totalRow.innerHTML = "<td><strong>Total</strong></td>";
+
+            for(let i=1; i<=4; i++) {
+                let name = document.getElementById('n' + i).value;
+                namesHeader.innerHTML += `<th>${name}</th>`;
+                let cash = (totals[i-1] * val).toFixed(2);
+                totalRow.innerHTML += `<td class="${totals[i-1] >= 0 ? 'money' : 'debt'}">$${cash}</td>`;
+            }
+        }
+
+        function resetSession() {
+            if(confirm("Clear all hands and totals?")) location.reload();
+        }
+
+        setupLosers();
     </script>
 </body>
 </html>
