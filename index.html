@@ -1,38 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Big 2 Cut-Throat Scorer</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #1a1a1a; color: white; }
-        .container { max-width: 500px; margin: auto; }
-        .input-group { margin-bottom: 10px; }
-        input { width: 100%; padding: 8px; margin-top: 5px; }
-        button { padding: 10px; width: 100%; background: #0070f3; color: white; border: none; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
+        .container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h1 { text-align: center; color: #4bb5ff; }
+        .player-row { border-bottom: 1px solid #333; padding: 15px 0; }
+        .player-row:last-child { border: none; }
+        .input-group { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
+        input[type="number"] { width: 60px; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; }
+        .bonus-group { font-size: 0.9em; color: #aaa; }
+        button { width: 100%; padding: 15px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        button:hover { background: #005bc1; }
+        #result { margin-top: 25px; padding: 15px; border-radius: 8px; background: #252525; }
+        .winner { color: #4caf50; font-weight: bold; }
+        .loser { color: #f44336; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Big 2 Scorer</h1>
-        <div id="setup">
-            <p>Enter cards remaining for losers:</p>
-            <div class="input-group">P2 Cards: <input type="number" id="p2" value="0"></div>
-            <div class="input-group">P3 Cards: <input type="number" id="p3" value="0"></div>
-            <div class="input-group">P4 Cards: <input type="number" id="p4" value="0"></div>
-            <button onclick="calculate()">Calculate Points</button>
+        <h1>Big 2 Cut-Throat</h1>
+        
+        <!-- Player 1 (Assuming Winner) -->
+        <div class="player-row">
+            <div class="input-group">
+                <strong>Winner (P1)</strong>
+                <span>Last move 2s: <input type="number" id="w_twos" value="0" min="0" max="4"></span>
+            </div>
+            <div class="bonus-group">
+                Special Hand: 
+                <select id="w_special">
+                    <option value="0">None</option>
+                    <option value="5">Straight Flush / 4-Kind (+5)</option>
+                    <option value="10">Royal Flush (+10)</option>
+                </select>
+            </div>
         </div>
+
+        <!-- Losers -->
+        <div id="losers-area">
+            <!-- P2, P3, P4 generated here -->
+            <script>
+                for(let i=2; i<=4; i++) {
+                    document.write(`
+                    <div class="player-row">
+                        <div class="input-group">
+                            <strong>Player ${i}</strong>
+                            <span>Cards Left: <input type="number" id="p${i}_cards" value="0" min="1"></span>
+                        </div>
+                        <div class="input-group bonus-group">
+                            <span>Holding 2s: <input type="number" id="p${i}_twos" value="0" min="0"></span>
+                            <span>Hand: <select id="p${i}_special">
+                                <option value="0">None</option>
+                                <option value="5">Str Flush / 4K (+5)</option>
+                                <option value="10">Royal Flush (+10)</option>
+                            </select></span>
+                        </div>
+                    </div>`);
+                }
+            </script>
+        </div>
+
+        <button onclick="calculateScores()">Calculate Payouts</button>
         <div id="result"></div>
     </div>
 
     <script>
-        function calculate() {
-            // This is where your specific points logic goes
-            const p2 = parseInt(document.getElementById('p2').value);
-            const p3 = parseInt(document.getElementById('p3').value);
-            const p4 = parseInt(document.getElementById('p4').value);
-            
-            // Logic for "Lesser Cards" and Ante (5 points)
-            // Winner gets 0, others pay 5 base + card differences
-            document.getElementById('result').innerHTML = "Calculation logic coming soon!";
+        function calculateScores() {
+            let p1_bonus = parseInt(document.getElementById('w_special').value);
+            let w_twos_bonus = parseInt(document.getElementById('w_twos').value) * 5;
+
+            let players = [
+                { id: 1, cards: 0, twos: 0, special: p1_bonus, score: 0 },
+                { id: 2, cards: parseInt(document.getElementById('p2_cards').value) || 0, twos: parseInt(document.getElementById('p2_twos').value) || 0, special: parseInt(document.getElementById('p2_special').value), score: 0 },
+                { id: 3, cards: parseInt(document.getElementById('p3_cards').value) || 0, twos: parseInt(document.getElementById('p3_twos').value) || 0, special: parseInt(document.getElementById('p3_special').value), score: 0 },
+                { id: 4, cards: parseInt(document.getElementById('p4_cards').value) || 0, twos: parseInt(document.getElementById('p4_twos').value) || 0, special: parseInt(document.getElementById('p4_special').value), score: 0 }
+            ];
+
+            // 1. Base Ante (5) + Winner's 2s Penalty
+            players.forEach(p => {
+                if (p.id !== 1) {
+                    let penalty = 5 + w_twos_bonus + (p.twos * 5);
+                    p.score -= penalty;
+                    players[0].score += penalty;
+                }
+            });
+
+            // 2. Cut-Throat Comparison (Lesser Cards)
+            for (let i = 0; i < players.length; i++) {
+                for (let j = 0; j < players.length; j++) {
+                    if (players[i].cards > players[j].cards) {
+                        let diff = players[i].cards - players[j].cards;
+                        players[i].score -= diff;
+                        players[j].score += diff;
+                    }
+                }
+            }
+
+            // 3. Special Hand Bonuses (Played during game)
+            // Note: Simplistic approach where special hand value is paid by all other players
+            players.forEach(p => {
+                if (p.special > 0) {
+                    players.forEach(other => {
+                        if (p.id !== other.id) {
+                            other.score -= p.special;
+                            p.score += p.special;
+                        }
+                    });
+                }
+            });
+
+            // Display
+            let resDiv = document.getElementById('result');
+            resDiv.innerHTML = "<h2>Results</h2>";
+            players.forEach(p => {
+                let colorClass = p.score >= 0 ? 'winner' : 'loser';
+                resDiv.innerHTML += `<p>Player ${p.id}: <span class="${colorClass}">${p.score > 0 ? '+' : ''}${p.score} points</span></p>`;
+            });
         }
     </script>
 </body>
