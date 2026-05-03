@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Big 2 Scorer - Live</title>
+    
+    <!-- App Name and iOS Icon Support -->
+    <title>Big 2</title>
+    <link rel="apple-touch-icon" href="https://img.freepik.com/premium-vector/poker-logo-design-vector-template-poker-club-logo-design-poker-labels-poker-emblems-vector-illustr_621051-512.jpg?w=360">
+    <meta name="apple-mobile-web-app-title" content="Big 2">
+    
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -23,7 +28,7 @@
             border-radius: 15px; 
             border: 1px solid #333; 
         }
-        h1 { color: #ffcc00; font-size: 36px; text-align: center; margin: 10px 0; }
+        h1 { color: #ffcc00; font-size: 42px; text-align: center; margin: 10px 0; }
         h2 { color: #4bb5ff; font-size: 28px; margin-top: 30px; border-bottom: 1px solid #333; }
         
         .setup-box { background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
@@ -77,7 +82,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Big 2 Scorer</h1>
+        <h1>Big 2</h1>
         <div id="session-date" style="text-align:center; color:#888; font-size:16px;">Connecting to Firebase...</div>
         
         <div class="setup-box">
@@ -126,7 +131,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Updated with your specific Singapore region URL
         const firebaseConfig = {
             apiKey: "AIzaSyCh9aJZ_exqVOvUeWXXlxwEXONTDcK-0Pc",
             authDomain: "big-2-scorer-2d3c1.firebaseapp.com",
@@ -282,7 +286,6 @@
             }
         };
 
-        // Initial render so the screen isn't blank
         renderInputs();
         updateLedgerUI();
     </script>
