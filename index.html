@@ -2,49 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Big 2 Live Session</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big 2 Scorer - High Vis</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
-        .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; }
-        h1, h2 { text-align: center; color: #4bb5ff; margin-bottom: 5px; }
-        .timestamp { text-align: center; font-size: 0.8em; color: #777; margin-bottom: 20px; }
-        .setup-box { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
-        .player-row { border-bottom: 1px solid #333; padding: 15px 0; }
-        .input-group { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
-        input, select { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; }
-        .card-input { width: 60px; }
-        .name-input { width: 120px; }
-        button { width: 100%; padding: 12px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .secondary-btn { background: #b91c1c; margin-top: 20px; }
-        #ledger { margin-top: 25px; width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        #ledger th, #ledger td { padding: 10px; border: 1px solid #333; text-align: center; }
-        .money { color: #4caf50; font-weight: bold; }
-        .debt { color: #f44336; font-weight: bold; }
-        .winner-row { background: rgba(75, 181, 255, 0.1); }
+        /* Long-sighted friendly: Larger base font and high contrast */
+        body { 
+            font-family: 'Arial', sans-serif; 
+            padding: 20px; 
+            background: #000000; 
+            color: #ffffff; 
+            font-size: 22px; 
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: auto; 
+            background: #1a1a1a; 
+            padding: 30px; 
+            border-radius: 15px; 
+            border: 2px solid #4bb5ff; 
+        }
+        h1 { color: #ffcc00; font-size: 42px; margin-bottom: 10px; text-shadow: 2px 2px #000; }
+        h2 { color: #4bb5ff; font-size: 32px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        
+        .timestamp { font-size: 18px; color: #aaa; margin-bottom: 30px; }
+        
+        /* Larger tap targets for inputs */
+        .setup-box { 
+            background: #252525; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            border: 1px solid #444; 
+        }
+        .input-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            margin: 20px 0; 
+        }
+        .name-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        input, select { 
+            padding: 15px; 
+            font-size: 24px; 
+            border-radius: 10px; 
+            border: 2px solid #555; 
+            background: #ffffff; 
+            color: #000000; 
+            font-weight: bold;
+        }
+        input:focus { border-color: #ffcc00; outline: none; }
+
+        .player-row { 
+            background: #2a2a2a;
+            border: 1px solid #444; 
+            padding: 25px; 
+            margin-bottom: 20px;
+            border-radius: 12px;
+        }
+        .winner-row { border: 3px solid #4caf50; background: #1b2e1c; }
+
+        /* Massive buttons for easy clicking */
+        button { 
+            width: 100%; 
+            padding: 25px; 
+            font-size: 28px; 
+            background: #0070f3; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: 15px;
+            box-shadow: 0 4px 0 #004aab;
+        }
+        button:active { transform: translateY(4px); box-shadow: none; }
+        .secondary-btn { background: #d32f2f; box-shadow: 0 4px 0 #8b1d1d; }
+
+        /* Bold Ledger */
+        #ledger { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        #ledger th, #ledger td { 
+            padding: 18px; 
+            border: 2px solid #444; 
+            text-align: center; 
+            font-size: 24px;
+        }
+        th { background: #333; color: #ffcc00; }
+        .money { color: #00ff00; font-weight: bold; }
+        .debt { color: #ff4d4d; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Big 2 Live Session</h1>
+        <h1>Big 2 Scorer</h1>
         <div id="session-date" class="timestamp">Initializing...</div>
         
         <div class="setup-box">
             <div class="input-group">
-                Value per Point ($): <input type="number" id="point_val" value="1.00" step="0.10" onchange="syncToFirebase()">
+                <label><strong>$ Per Point:</strong></label>
+                <input type="number" id="point_val" value="1.00" step="0.10" onchange="syncToFirebase()">
             </div>
             <div class="input-group">
-                Names: 
-                <input type="text" id="n1" class="name-input" placeholder="P1" onchange="syncToFirebase()">
-                <input type="text" id="n2" class="name-input" placeholder="P2" onchange="syncToFirebase()">
-                <input type="text" id="n3" class="name-input" placeholder="P3" onchange="syncToFirebase()">
-                <input type="text" id="n4" class="name-input" placeholder="P4" onchange="syncToFirebase()">
+                <label><strong>Player Names:</strong></label>
+                <div class="name-row">
+                    <input type="text" id="n1" placeholder="P1" onchange="syncToFirebase()">
+                    <input type="text" id="n2" placeholder="P2" onchange="syncToFirebase()">
+                    <input type="text" id="n3" placeholder="P3" onchange="syncToFirebase()">
+                    <input type="text" id="n4" placeholder="P4" onchange="syncToFirebase()">
+                </div>
             </div>
         </div>
 
         <div id="game-input">
             <h2>Current Hand</h2>
             <div class="input-group">
-                <strong>Who Won?</strong>
+                <label><strong>Who Won?</strong></label>
                 <select id="winner_idx" onchange="renderInputs()">
                     <option value="0">Player 1</option>
                     <option value="1">Player 2</option>
@@ -55,16 +132,18 @@
             <div id="player-inputs"></div>
         </div>
 
-        <button onclick="calculateHand()">Submit Hand to Cloud</button>
+        <button onclick="calculateHand()">SUBMIT SCORES</button>
         
         <div id="session-summary">
             <h2>Live Ledger</h2>
-            <table id="ledger">
-                <thead id="ledger-head"></thead>
-                <tbody id="ledger-body"></tbody>
-                <tfoot id="ledger-foot"></tfoot>
-            </table>
-            <button class="secondary-btn" onclick="resetSession()">Permanently Clear Session</button>
+            <div style="overflow-x: auto;">
+                <table id="ledger">
+                    <thead id="ledger-head"></thead>
+                    <tbody id="ledger-body"></tbody>
+                    <tfoot id="ledger-foot"></tfoot>
+                </table>
+            </div>
+            <button class="secondary-btn" onclick="resetSession()">WIPE ALL DATA</button>
         </div>
     </div>
 
@@ -75,7 +154,6 @@
         const firebaseConfig = {
             apiKey: "AIzaSyCh9aJZ_exqVOvUeWXXlxwEXONTDcK-0Pc",
             authDomain: "big-2-scorer-2d3c1.firebaseapp.com",
-            // Make sure this URL matches your Firebase console exactly!
             databaseURL: "https://big-2-scorer-2d3c1-default-rtdb.firebaseio.com",
             projectId: "big-2-scorer-2d3c1",
             storageBucket: "big-2-scorer-2d3c1.firebasestorage.app",
@@ -90,12 +168,11 @@
         let sessionData = {
             startTime: new Date().toLocaleString(),
             pointValue: 1.0,
-            names: ["Player 1", "Player 2", "Player 3", "Player 4"],
+            names: ["P1", "P2", "P3", "P4"],
             totals: [0, 0, 0, 0],
             history: []
         };
 
-        // UI RENDERER
         window.renderInputs = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let html = "";
@@ -103,14 +180,14 @@
                 const isWinner = i === winIdx;
                 html += `
                 <div class="player-row ${isWinner ? 'winner-row' : ''}">
-                    <strong>${sessionData.names[i]} ${isWinner ? '(Winner)' : ''}</strong>
-                    <div class="input-group">
-                        ${!isWinner ? `Cards: <input type="number" id="p${i}_cards" class="card-input" value="0">` : `Ending 2s: <input type="number" id="p${i}_w_twos" class="card-input" value="0">`}
-                        2s Held: <input type="number" id="p${i}_twos" class="card-input" value="0">
+                    <div style="font-size: 28px; margin-bottom: 10px;"><strong>${sessionData.names[i]} ${isWinner ? '🏆' : ''}</strong></div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        ${!isWinner ? `Cards: <input type="number" id="p${i}_cards" style="width:80px" value="0">` : `End 2s: <input type="number" id="p${i}_w_twos" style="width:80px" value="0">`}
+                        Held 2s: <input type="number" id="p${i}_twos" style="width:80px" value="0">
                         Bonus: <select id="p${i}_special">
                             <option value="0">None</option>
-                            <option value="5">SF/4K (+5)</option>
-                            <option value="10">Royal (+10)</option>
+                            <option value="5">SF/4K</option>
+                            <option value="10">Royal</option>
                         </select>
                     </div>
                 </div>`;
@@ -118,7 +195,6 @@
             document.getElementById('player-inputs').innerHTML = html;
         };
 
-        // FIREBASE SYNC
         onValue(sessionRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -127,7 +203,7 @@
                 sessionData.names.forEach((name, i) => {
                     document.getElementById('n' + (i + 1)).value = name;
                 });
-                document.getElementById('session-date').innerText = "Session Started: " + sessionData.startTime;
+                document.getElementById('session-date').innerText = "Started: " + sessionData.startTime;
             }
             updateLedgerUI();
             renderInputs();
@@ -136,7 +212,7 @@
         window.syncToFirebase = function() {
             sessionData.pointValue = parseFloat(document.getElementById('point_val').value) || 1.0;
             for(let i=0; i<4; i++) {
-                sessionData.names[i] = document.getElementById('n' + (i+1)).value || "Player " + (i+1);
+                sessionData.names[i] = document.getElementById('n' + (i+1)).value || "P" + (i+1);
             }
             set(sessionRef, sessionData);
         };
@@ -189,38 +265,37 @@
         };
 
         function updateLedgerUI() {
-            let head = `<tr><th>Hand</th>`;
+            let head = `<tr><th>#</th>`;
             sessionData.names.forEach(n => head += `<th>${n}</th>`);
             document.getElementById('ledger-head').innerHTML = head + `</tr>`;
 
             let bodyHtml = "";
             if (sessionData.history) {
                 sessionData.history.forEach((hand, idx) => {
-                    bodyHtml += `<tr><td>#${idx+1}</td>`;
+                    bodyHtml += `<tr><td>${idx+1}</td>`;
                     hand.forEach(pts => {
                         let val = (pts * sessionData.pointValue).toFixed(2);
-                        bodyHtml += `<td class="${pts >= 0 ? 'money' : 'debt'}">$${val}</td>`;
+                        bodyHtml += `<td class="${pts >= 0 ? 'money' : 'debt'}">${pts >= 0 ? '+' : ''}${val}</td>`;
                     });
                     bodyHtml += `</tr>`;
                 });
             }
             document.getElementById('ledger-body').innerHTML = bodyHtml;
 
-            let foot = `<tr><td><strong>Total</strong></td>`;
+            let foot = `<tr><td><strong>Σ</strong></td>`;
             sessionData.totals.forEach(t => {
                 let val = (t * sessionData.pointValue).toFixed(2);
-                foot += `<td class="${t >= 0 ? 'money' : 'debt'}"><strong>$${val}</strong></td>`;
+                foot += `<td class="${t >= 0 ? 'money' : 'debt'}"><strong>${val}</strong></td>`;
             });
             document.getElementById('ledger-foot').innerHTML = foot + `</tr>`;
         }
 
         window.resetSession = function() {
-            if(confirm("Wipe Cloud Session?")) {
+            if(confirm("DANGER: WIPE EVERYTHING?")) {
                 set(sessionRef, null).then(() => location.reload());
             }
         };
 
-        // Start UI immediately
         renderInputs();
         updateLedgerUI();
     </script>
