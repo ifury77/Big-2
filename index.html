@@ -2,114 +2,110 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Big 2 Scorer - High Vis</title>
+    <!-- Critical for iOS: prevents horizontal scroll and auto-zoom on inputs -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Big 2 Scorer</title>
     <style>
-        /* Long-sighted friendly: Larger base font and high contrast */
+        /* High contrast for long-sightedness, fluid for iPhone 17 Air */
+        * { box-sizing: border-box; }
         body { 
-            font-family: 'Arial', sans-serif; 
-            padding: 20px; 
+            font-family: -apple-system, system-ui, sans-serif; 
+            padding: 10px; 
             background: #000000; 
             color: #ffffff; 
-            font-size: 22px; 
-            line-height: 1.6;
+            font-size: 20px; 
+            margin: 0;
         }
         .container { 
-            max-width: 900px; 
+            width: 100%;
+            max-width: 600px; 
             margin: auto; 
-            background: #1a1a1a; 
-            padding: 30px; 
-            border-radius: 15px; 
-            border: 2px solid #4bb5ff; 
-        }
-        h1 { color: #ffcc00; font-size: 42px; margin-bottom: 10px; text-shadow: 2px 2px #000; }
-        h2 { color: #4bb5ff; font-size: 32px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        
-        .timestamp { font-size: 18px; color: #aaa; margin-bottom: 30px; }
-        
-        /* Larger tap targets for inputs */
-        .setup-box { 
-            background: #252525; 
-            padding: 20px; 
+            background: #111; 
+            padding: 15px; 
             border-radius: 12px; 
-            margin-bottom: 30px; 
-            border: 1px solid #444; 
+            border: 1px solid #333; 
         }
-        .input-group { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            margin: 20px 0; 
+        h1 { color: #ffcc00; font-size: 36px; text-align: center; margin: 10px 0; }
+        h2 { color: #4bb5ff; font-size: 28px; margin-top: 30px; border-bottom: 1px solid #333; }
+        
+        .setup-box { 
+            background: #1a1a1a; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
         }
-        .name-row {
+        
+        /* Stacked inputs for mobile */
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+        .name-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 10px;
         }
         
         input, select { 
-            padding: 15px; 
-            font-size: 24px; 
-            border-radius: 10px; 
-            border: 2px solid #555; 
-            background: #ffffff; 
-            color: #000000; 
+            width: 100%;
+            padding: 14px; 
+            font-size: 22px; /* iOS won't zoom if 16px+, 22px is better for visibility */
+            border-radius: 8px; 
+            border: 2px solid #444; 
+            background: #fff; 
+            color: #000; 
             font-weight: bold;
+            -webkit-appearance: none; /* Removes iOS default styling */
         }
-        input:focus { border-color: #ffcc00; outline: none; }
 
-        .player-row { 
-            background: #2a2a2a;
-            border: 1px solid #444; 
-            padding: 25px; 
-            margin-bottom: 20px;
-            border-radius: 12px;
+        .player-card { 
+            background: #222;
+            border: 2px solid #444; 
+            padding: 15px; 
+            margin-bottom: 15px;
+            border-radius: 10px;
         }
-        .winner-row { border: 3px solid #4caf50; background: #1b2e1c; }
+        .winner-card { border-color: #4caf50; background: #0e2110; }
 
-        /* Massive buttons for easy clicking */
+        .row-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
         button { 
             width: 100%; 
-            padding: 25px; 
-            font-size: 28px; 
+            padding: 20px; 
+            font-size: 24px; 
             background: #0070f3; 
             color: white; 
             border: none; 
-            border-radius: 12px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            margin-top: 15px;
-            box-shadow: 0 4px 0 #004aab;
+            border-radius: 10px; 
+            font-weight: bold; 
+            margin-top: 10px;
         }
-        button:active { transform: translateY(4px); box-shadow: none; }
-        .secondary-btn { background: #d32f2f; box-shadow: 0 4px 0 #8b1d1d; }
+        .secondary-btn { background: #b91c1c; margin-top: 40px; font-size: 18px; }
 
-        /* Bold Ledger */
-        #ledger { width: 100%; border-collapse: collapse; margin-top: 30px; }
-        #ledger th, #ledger td { 
-            padding: 18px; 
-            border: 2px solid #444; 
-            text-align: center; 
-            font-size: 24px;
-        }
-        th { background: #333; color: #ffcc00; }
-        .money { color: #00ff00; font-weight: bold; }
-        .debt { color: #ff4d4d; font-weight: bold; }
+        /* Scrollable Ledger for mobile */
+        .table-wrap { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 400px; }
+        th, td { padding: 12px; border: 1px solid #333; text-align: center; font-size: 20px; }
+        th { background: #222; color: #ffcc00; }
+        .money { color: #00ff00; }
+        .debt { color: #ff4d4d; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Big 2 Scorer</h1>
-        <div id="session-date" class="timestamp">Initializing...</div>
+        <div id="session-date" style="text-align:center; color:#888; font-size:16px;">Connecting...</div>
         
         <div class="setup-box">
             <div class="input-group">
-                <label><strong>$ Per Point:</strong></label>
+                <label>Value Per Point ($)</label>
                 <input type="number" id="point_val" value="1.00" step="0.10" onchange="syncToFirebase()">
             </div>
             <div class="input-group">
-                <label><strong>Player Names:</strong></label>
-                <div class="name-row">
+                <label>Players</label>
+                <div class="name-grid">
                     <input type="text" id="n1" placeholder="P1" onchange="syncToFirebase()">
                     <input type="text" id="n2" placeholder="P2" onchange="syncToFirebase()">
                     <input type="text" id="n3" placeholder="P3" onchange="syncToFirebase()">
@@ -118,33 +114,30 @@
             </div>
         </div>
 
-        <div id="game-input">
-            <h2>Current Hand</h2>
-            <div class="input-group">
-                <label><strong>Who Won?</strong></label>
-                <select id="winner_idx" onchange="renderInputs()">
-                    <option value="0">Player 1</option>
-                    <option value="1">Player 2</option>
-                    <option value="2">Player 3</option>
-                    <option value="3">Player 4</option>
-                </select>
-            </div>
-            <div id="player-inputs"></div>
+        <h2>Current Hand</h2>
+        <div class="input-group">
+            <label>Winner</label>
+            <select id="winner_idx" onchange="renderInputs()">
+                <option value="0">Player 1</option>
+                <option value="1">Player 2</option>
+                <option value="2">Player 3</option>
+                <option value="3">Player 4</option>
+            </select>
+        </div>
+        
+        <div id="player-inputs"></div>
+
+        <button onclick="calculateHand()">SUBMIT SCORE</button>
+        
+        <div class="table-wrap">
+            <table id="ledger">
+                <thead id="ledger-head"></thead>
+                <tbody id="ledger-body"></tbody>
+                <tfoot id="ledger-foot"></tfoot>
+            </table>
         </div>
 
-        <button onclick="calculateHand()">SUBMIT SCORES</button>
-        
-        <div id="session-summary">
-            <h2>Live Ledger</h2>
-            <div style="overflow-x: auto;">
-                <table id="ledger">
-                    <thead id="ledger-head"></thead>
-                    <tbody id="ledger-body"></tbody>
-                    <tfoot id="ledger-foot"></tfoot>
-                </table>
-            </div>
-            <button class="secondary-btn" onclick="resetSession()">WIPE ALL DATA</button>
-        </div>
+        <button class="secondary-btn" onclick="resetSession()">RESET SESSION</button>
     </div>
 
     <script type="module">
@@ -177,17 +170,26 @@
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let html = "";
             for(let i=0; i<4; i++) {
-                const isWinner = i === winIdx;
+                const isWin = i === winIdx;
                 html += `
-                <div class="player-row ${isWinner ? 'winner-row' : ''}">
-                    <div style="font-size: 28px; margin-bottom: 10px;"><strong>${sessionData.names[i]} ${isWinner ? '🏆' : ''}</strong></div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        ${!isWinner ? `Cards: <input type="number" id="p${i}_cards" style="width:80px" value="0">` : `End 2s: <input type="number" id="p${i}_w_twos" style="width:80px" value="0">`}
-                        Held 2s: <input type="number" id="p${i}_twos" style="width:80px" value="0">
-                        Bonus: <select id="p${i}_special">
+                <div class="player-card ${isWin ? 'winner-card' : ''}">
+                    <strong>${sessionData.names[i]} ${isWin ? '🏆' : ''}</strong>
+                    <div class="row-inputs">
+                        <div>
+                            <label style="font-size:14px">${isWin ? 'End 2s' : 'Cards'}</label>
+                            <input type="number" id="p${i}_${isWin ? 'w_twos' : 'cards'}" value="0">
+                        </div>
+                        <div>
+                            <label style="font-size:14px">Held 2s</label>
+                            <input type="number" id="p${i}_twos" value="0">
+                        </div>
+                    </div>
+                    <div style="margin-top:10px">
+                        <label style="font-size:14px">Bonus</label>
+                        <select id="p${i}_special">
                             <option value="0">None</option>
-                            <option value="5">SF/4K</option>
-                            <option value="10">Royal</option>
+                            <option value="5">SF/4K (+5)</option>
+                            <option value="10">Royal (+10)</option>
                         </select>
                     </div>
                 </div>`;
@@ -200,9 +202,7 @@
             if (data) {
                 sessionData = data;
                 document.getElementById('point_val').value = sessionData.pointValue;
-                sessionData.names.forEach((name, i) => {
-                    document.getElementById('n' + (i + 1)).value = name;
-                });
+                sessionData.names.forEach((n, i) => { document.getElementById('n' + (i + 1)).value = n; });
                 document.getElementById('session-date').innerText = "Started: " + sessionData.startTime;
             }
             updateLedgerUI();
@@ -220,9 +220,7 @@
         window.calculateHand = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let handPoints = [0, 0, 0, 0];
-            let cards = [0, 0, 0, 0];
-            let twos = [0, 0, 0, 0];
-            let specials = [0, 0, 0, 0];
+            let cards = [0, 0, 0, 0], twos = [0, 0, 0, 0], specials = [0, 0, 0, 0];
 
             for(let i=0; i<4; i++) {
                 twos[i] = parseInt(document.getElementById(`p${i}_twos`).value) || 0;
@@ -266,7 +264,7 @@
 
         function updateLedgerUI() {
             let head = `<tr><th>#</th>`;
-            sessionData.names.forEach(n => head += `<th>${n}</th>`);
+            sessionData.names.forEach(n => head += `<th>${n.substring(0,3)}</th>`);
             document.getElementById('ledger-head').innerHTML = head + `</tr>`;
 
             let bodyHtml = "";
@@ -282,7 +280,7 @@
             }
             document.getElementById('ledger-body').innerHTML = bodyHtml;
 
-            let foot = `<tr><td><strong>Σ</strong></td>`;
+            let foot = `<tr><td><strong>Total</strong></td>`;
             sessionData.totals.forEach(t => {
                 let val = (t * sessionData.pointValue).toFixed(2);
                 foot += `<td class="${t >= 0 ? 'money' : 'debt'}"><strong>${val}</strong></td>`;
@@ -291,9 +289,7 @@
         }
 
         window.resetSession = function() {
-            if(confirm("DANGER: WIPE EVERYTHING?")) {
-                set(sessionRef, null).then(() => location.reload());
-            }
+            if(confirm("Wipe all data?")) set(sessionRef, null).then(() => location.reload());
         };
 
         renderInputs();
