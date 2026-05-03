@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Big 2 Cut-Throat Live</title>
+    <title>Big 2 Live Session</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
         .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; }
@@ -26,7 +26,7 @@
 <body>
     <div class="container">
         <h1>Big 2 Live Session</h1>
-        <div id="session-date" class="timestamp">Connecting to Firebase...</div>
+        <div id="session-date" class="timestamp">Initializing...</div>
         
         <div class="setup-box">
             <div class="input-group">
@@ -68,15 +68,14 @@
         </div>
     </div>
 
-    <!-- Firebase Implementation -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Your specific config from image_514e59.png
         const firebaseConfig = {
             apiKey: "AIzaSyCh9aJZ_exqVOvUeWXXlxwEXONTDcK-0Pc",
             authDomain: "big-2-scorer-2d3c1.firebaseapp.com",
+            // Make sure this URL matches your Firebase console exactly!
             databaseURL: "https://big-2-scorer-2d3c1-default-rtdb.firebaseio.com",
             projectId: "big-2-scorer-2d3c1",
             storageBucket: "big-2-scorer-2d3c1.firebasestorage.app",
@@ -96,31 +95,7 @@
             history: []
         };
 
-        // Sync from Firebase
-        onValue(sessionRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                sessionData = data;
-                document.getElementById('point_val').value = sessionData.pointValue;
-                sessionData.names.forEach((name, i) => {
-                    document.getElementById('n' + (i + 1)).value = name;
-                });
-                document.getElementById('session-date').innerText = "Session Started: " + sessionData.startTime;
-                updateLedgerUI();
-                renderInputs();
-            } else {
-                syncToFirebase(); // Initial setup if DB is empty
-            }
-        });
-
-        window.syncToFirebase = function() {
-            sessionData.pointValue = parseFloat(document.getElementById('point_val').value) || 1.0;
-            for(let i=0; i<4; i++) {
-                sessionData.names[i] = document.getElementById('n' + (i+1)).value || "Player " + (i+1);
-            }
-            set(sessionRef, sessionData);
-        };
-
+        // UI RENDERER
         window.renderInputs = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let html = "";
@@ -143,6 +118,29 @@
             document.getElementById('player-inputs').innerHTML = html;
         };
 
+        // FIREBASE SYNC
+        onValue(sessionRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                sessionData = data;
+                document.getElementById('point_val').value = sessionData.pointValue;
+                sessionData.names.forEach((name, i) => {
+                    document.getElementById('n' + (i + 1)).value = name;
+                });
+                document.getElementById('session-date').innerText = "Session Started: " + sessionData.startTime;
+            }
+            updateLedgerUI();
+            renderInputs();
+        });
+
+        window.syncToFirebase = function() {
+            sessionData.pointValue = parseFloat(document.getElementById('point_val').value) || 1.0;
+            for(let i=0; i<4; i++) {
+                sessionData.names[i] = document.getElementById('n' + (i+1)).value || "Player " + (i+1);
+            }
+            set(sessionRef, sessionData);
+        };
+
         window.calculateHand = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let handPoints = [0, 0, 0, 0];
@@ -158,7 +156,6 @@
 
             const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_w_twos`).value) || 0) * 5;
 
-            // 1. Ante (5) + 2s Penalties
             for(let i=0; i<4; i++) {
                 if(i !== winIdx) {
                     let penalty = 5 + winTwosBonus + (twos[i] * 5);
@@ -167,7 +164,6 @@
                 }
             }
 
-            // 2. Cut-throat Card Differences
             for(let i=0; i<4; i++) {
                 for(let j=0; j<4; j++) {
                     if(cards[i] > cards[j]) {
@@ -178,7 +174,6 @@
                 }
             }
 
-            // 3. Special Bonuses
             specials.forEach((pts, idx) => {
                 if(pts > 0) {
                     for(let i=0; i<4; i++) {
@@ -220,8 +215,14 @@
         }
 
         window.resetSession = function() {
-            if(confirm("Wipe Cloud Session?")) set(sessionRef, null);
+            if(confirm("Wipe Cloud Session?")) {
+                set(sessionRef, null).then(() => location.reload());
+            }
         };
+
+        // Start UI immediately
+        renderInputs();
+        updateLedgerUI();
     </script>
 </body>
 </html>
