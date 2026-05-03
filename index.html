@@ -2,132 +2,151 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Big 2 Pro Scorer</title>
+    <title>Big 2 Pro Scorer - Persistent</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
-        .container { max-width: 700px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; }
-        h1, h2 { text-align: center; color: #4bb5ff; }
+        .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; }
+        h1, h2 { text-align: center; color: #4bb5ff; margin-bottom: 5px; }
+        .timestamp { text-align: center; font-size: 0.8em; color: #777; margin-bottom: 20px; }
         .setup-box { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
         .player-row { border-bottom: 1px solid #333; padding: 15px 0; }
         .input-group { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
-        input { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; }
+        input, select { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; }
         .card-input { width: 60px; }
         .name-input { width: 120px; }
         button { width: 100%; padding: 12px; background: #0070f3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .secondary-btn { background: #444; margin-top: 5px; }
-        #ledger { margin-top: 25px; width: 100%; border-collapse: collapse; }
+        .secondary-btn { background: #b91c1c; margin-top: 20px; }
+        #ledger { margin-top: 25px; width: 100%; border-collapse: collapse; font-size: 0.9em; }
         #ledger th, #ledger td { padding: 10px; border: 1px solid #333; text-align: center; }
         .money { color: #4caf50; font-weight: bold; }
         .debt { color: #f44336; font-weight: bold; }
+        .winner-row { background: rgba(75, 181, 255, 0.1); }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Big 2 Session Manager</h1>
+        <div id="session-date" class="timestamp"></div>
         
-        <div class="setup-box" id="initial-setup">
-            <h3>Session Settings</h3>
+        <div class="setup-box">
             <div class="input-group">
-                Value per Point ($): <input type="number" id="point_val" value="1.00" step="0.10">
+                Value per Point ($): <input type="number" id="point_val" value="1.00" step="0.10" onchange="saveSession()">
             </div>
             <div class="input-group">
                 Names: 
-                <input type="text" id="n1" placeholder="P1 Name" class="name-input" value="Player 1">
-                <input type="text" id="n2" placeholder="P2 Name" class="name-input" value="Player 2">
-                <input type="text" id="n3" placeholder="P3 Name" class="name-input" value="Player 3">
-                <input type="text" id="n4" placeholder="P4 Name" class="name-input" value="Player 4">
+                <input type="text" id="n1" class="name-input" placeholder="P1" onchange="saveSession()">
+                <input type="text" id="n2" class="name-input" placeholder="P2" onchange="saveSession()">
+                <input type="text" id="n3" class="name-input" placeholder="P3" onchange="saveSession()">
+                <input type="text" id="n4" class="name-input" placeholder="P4" onchange="saveSession()">
             </div>
         </div>
 
         <div id="game-input">
             <h2>Current Hand</h2>
-            <div class="player-row">
-                <strong>Winner: <span id="disp_n1">P1</span></strong>
-                <span>Last move 2s: <input type="number" id="w_twos" value="0" class="card-input"></span>
-                <select id="w_special">
-                    <option value="0">No Bonus</option>
-                    <option value="5">SF/4K (+5)</option>
-                    <option value="10">Royal Flush (+10)</option>
+            <div class="input-group">
+                <strong>Who Won?</strong>
+                <select id="winner_idx" onchange="renderInputs()">
+                    <option value="0">Player 1</option>
+                    <option value="1">Player 2</option>
+                    <option value="2">Player 3</option>
+                    <option value="3">Player 4</option>
                 </select>
             </div>
-            <div id="losers-list"></div>
+            <div id="player-inputs"></div>
         </div>
 
         <button onclick="calculateHand()">Submit Hand</button>
         
         <div id="session-summary">
-            <h2>Running Totals</h2>
+            <h2>Running Ledger</h2>
             <table id="ledger">
-                <thead>
-                    <tr id="ledger-names"></tr>
-                </thead>
-                <tbody id="ledger-body">
-                    <tr id="total-row"></tr>
-                </tbody>
+                <thead id="ledger-head"></thead>
+                <tbody id="ledger-body"></tbody>
+                <tfoot id="ledger-foot"></tfoot>
             </table>
-            <button class="secondary-btn" onclick="resetSession()">Reset Whole Session</button>
+            <button class="secondary-btn" onclick="resetSession()">Permanently Clear Session</button>
         </div>
     </div>
 
     <script>
-        let totals = [0, 0, 0, 0];
-        let handCount = 0;
+        let sessionData = {
+            startTime: new Date().toLocaleString(),
+            pointValue: 1.0,
+            names: ["Player 1", "Player 2", "Player 3", "Player 4"],
+            totals: [0, 0, 0, 0],
+            history: [] // Stores individual hand results
+        };
 
-        function updateNames() {
-            for(let i=1; i<=4; i++) {
-                let name = document.getElementById('n' + i).value;
-                if(i === 1) document.getElementById('disp_n1').innerText = name;
-                document.querySelectorAll('.name-label-' + i).forEach(el => el.innerText = name);
+        // Initialize App
+        window.onload = function() {
+            const saved = localStorage.getItem('big2_session');
+            if (saved) {
+                sessionData = JSON.parse(saved);
+                // Sync inputs with saved data
+                document.getElementById('point_val').value = sessionData.pointValue;
+                sessionData.names.forEach((name, i) => document.getElementById('n' + (i + 1)).value = name);
             }
+            document.getElementById('session-date').innerText = "Session Started: " + sessionData.startTime;
+            renderInputs();
+            updateLedgerUI();
+        };
+
+        function saveSession() {
+            sessionData.pointValue = parseFloat(document.getElementById('point_val').value);
+            for(let i=0; i<4; i++) {
+                sessionData.names[i] = document.getElementById('n' + (i+1)).value || "Player " + (i+1);
+            }
+            localStorage.setItem('big2_session', JSON.stringify(sessionData));
+            renderInputs();
+            updateLedgerUI();
         }
 
-        function setupLosers() {
+        function renderInputs() {
+            const winIdx = parseInt(document.getElementById('winner_idx').value);
             let html = "";
-            for(let i=2; i<=4; i++) {
+            for(let i=0; i<4; i++) {
+                const isWinner = i === winIdx;
                 html += `
-                <div class="player-row">
-                    <strong><span class="name-label-${i}">P${i}</span></strong>
-                    Cards: <input type="number" id="p${i}_cards" value="0" class="card-input">
-                    2s: <input type="number" id="p${i}_twos" value="0" class="card-input">
-                    <select id="p${i}_special">
-                        <option value="0">No Bonus</option>
-                        <option value="5">SF/4K (+5)</option>
-                        <option value="10">Royal Flush (+10)</option>
-                    </select>
+                <div class="player-row ${isWinner ? 'winner-row' : ''}">
+                    <strong>${sessionData.names[i]} ${isWinner ? '(Winner)' : ''}</strong>
+                    <div class="input-group">
+                        ${!isWinner ? `Cards: <input type="number" id="p${i}_cards" class="card-input" value="0">` : `Last Move 2s: <input type="number" id="p${i}_w_twos" class="card-input" value="0">`}
+                        2s Held: <input type="number" id="p${i}_twos" class="card-input" value="0">
+                        Bonus: <select id="p${i}_special">
+                            <option value="0">None</option>
+                            <option value="5">SF/4K (+5)</option>
+                            <option value="10">Royal (+10)</option>
+                        </select>
+                    </div>
                 </div>`;
             }
-            document.getElementById('losers-list').innerHTML = html;
+            document.getElementById('player-inputs').innerHTML = html;
         }
 
         function calculateHand() {
-            updateNames();
-            let val = parseFloat(document.getElementById('point_val').value);
-            let w_twos_bonus = parseInt(document.getElementById('w_twos').value) * 5;
-            
-            let currentHandPoints = [0, 0, 0, 0];
-            let cards = [0, 
-                parseInt(document.getElementById('p2_cards').value) || 0,
-                parseInt(document.getElementById('p3_cards').value) || 0,
-                parseInt(document.getElementById('p4_cards').value) || 0
-            ];
-            let twos = [
-                0,
-                parseInt(document.getElementById('p2_twos').value) || 0,
-                parseInt(document.getElementById('p3_twos').value) || 0,
-                parseInt(document.getElementById('p4_twos').value) || 0
-            ];
-            let specials = [
-                parseInt(document.getElementById('w_special').value),
-                parseInt(document.getElementById('p2_special').value),
-                parseInt(document.getElementById('p3_special').value),
-                parseInt(document.getElementById('p4_special').value)
-            ];
+            const winIdx = parseInt(document.getElementById('winner_idx').value);
+            let handPoints = [0, 0, 0, 0];
+            let cards = [0, 0, 0, 0];
+            let twos = [0, 0, 0, 0];
+            let specials = [0, 0, 0, 0];
 
-            // 1. Ante + Winner's 2s + Loser's 2s
-            for(let i=1; i<4; i++) {
-                let penalty = 5 + w_twos_bonus + (twos[i] * 5);
-                currentHandPoints[i] -= penalty;
-                currentHandPoints[0] += penalty;
+            for(let i=0; i<4; i++) {
+                twos[i] = parseInt(document.getElementById(`p${i}_twos`).value) || 0;
+                specials[i] = parseInt(document.getElementById(`p${i}_special`).value) || 0;
+                if (i !== winIdx) {
+                    cards[i] = parseInt(document.getElementById(`p${i}_cards`).value) || 0;
+                }
+            }
+
+            const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_w_twos`).value) || 0) * 5;
+
+            // 1. Ante + 2s Penalties
+            for(let i=0; i<4; i++) {
+                if(i !== winIdx) {
+                    let penalty = 5 + winTwosBonus + (twos[i] * 5);
+                    handPoints[i] -= penalty;
+                    handPoints[winIdx] += penalty;
+                }
             }
 
             // 2. Cut-throat differences
@@ -135,58 +154,60 @@
                 for(let j=0; j<4; j++) {
                     if(cards[i] > cards[j]) {
                         let diff = cards[i] - cards[j];
-                        currentHandPoints[i] -= diff;
-                        currentHandPoints[j] += diff;
+                        handPoints[i] -= diff;
+                        handPoints[j] += diff;
                     }
                 }
             }
 
-            // 3. Specials
+            // 3. Special Hand Bonuses
             specials.forEach((pts, idx) => {
                 if(pts > 0) {
                     for(let i=0; i<4; i++) {
-                        if(i !== idx) {
-                            currentHandPoints[i] -= pts;
-                            currentHandPoints[idx] += pts;
-                        }
+                        if(i !== idx) { handPoints[i] -= pts; handPoints[idx] += pts; }
                     }
                 }
             });
 
-            // Update Totals and Ledger
-            handCount++;
-            let table = document.getElementById('ledger-body');
-            let row = table.insertRow(table.rows.length - 1);
-            row.innerHTML = `<td>Hand ${handCount}</td>`;
-            
-            currentHandPoints.forEach((pts, i) => {
-                totals[i] += pts;
-                let cash = (pts * val).toFixed(2);
-                row.innerHTML += `<td class="${pts >= 0 ? 'money' : 'debt'}">$${cash}</td>`;
-            });
-
-            updateTotalRow(val);
+            // Save hand to history and update totals
+            sessionData.history.push(handPoints);
+            handPoints.forEach((pts, i) => sessionData.totals[i] += pts);
+            saveSession();
         }
 
-        function updateTotalRow(val) {
-            let namesHeader = document.getElementById('ledger-names');
-            namesHeader.innerHTML = "<th>Hand</th>";
-            let totalRow = document.getElementById('total-row');
-            totalRow.innerHTML = "<td><strong>Total</strong></td>";
+        function updateLedgerUI() {
+            // Header
+            let head = `<tr><th>Hand</th>`;
+            sessionData.names.forEach(n => head += `<th>${n}</th>`);
+            document.getElementById('ledger-head').innerHTML = head + `</tr>`;
 
-            for(let i=1; i<=4; i++) {
-                let name = document.getElementById('n' + i).value;
-                namesHeader.innerHTML += `<th>${name}</th>`;
-                let cash = (totals[i-1] * val).toFixed(2);
-                totalRow.innerHTML += `<td class="${totals[i-1] >= 0 ? 'money' : 'debt'}">$${cash}</td>`;
-            }
+            // Body (History)
+            let bodyHtml = "";
+            sessionData.history.forEach((hand, idx) => {
+                bodyHtml += `<tr><td>#${idx+1}</td>`;
+                hand.forEach(pts => {
+                    let val = (pts * sessionData.pointValue).toFixed(2);
+                    bodyHtml += `<td class="${pts >= 0 ? 'money' : 'debt'}">$${val}</td>`;
+                });
+                bodyHtml += `</tr>`;
+            });
+            document.getElementById('ledger-body').innerHTML = bodyHtml;
+
+            // Footer (Totals)
+            let foot = `<tr><td><strong>Total</strong></td>`;
+            sessionData.totals.forEach(t => {
+                let val = (t * sessionData.pointValue).toFixed(2);
+                foot += `<td class="${t >= 0 ? 'money' : 'debt'}"><strong>$${val}</strong></td>`;
+            });
+            document.getElementById('ledger-foot').innerHTML = foot + `</tr>`;
         }
 
         function resetSession() {
-            if(confirm("Clear all hands and totals?")) location.reload();
+            if(confirm("This will PERMANENTLY delete the session history. Continue?")) {
+                localStorage.removeItem('big2_session');
+                location.reload();
+            }
         }
-
-        setupLosers();
     </script>
 </body>
 </html>
