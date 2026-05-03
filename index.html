@@ -2,17 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Critical for iOS: prevents horizontal scroll and auto-zoom on inputs -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Big 2 Scorer</title>
+    <title>Big 2 Scorer - Live</title>
     <style>
-        /* High contrast for long-sightedness, fluid for iPhone 17 Air */
         * { box-sizing: border-box; }
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
-            padding: 10px; 
-            background: #000000; 
-            color: #ffffff; 
+            padding: 15px; 
+            background: #000; 
+            color: #fff; 
             font-size: 20px; 
             margin: 0;
         }
@@ -22,37 +20,26 @@
             margin: auto; 
             background: #111; 
             padding: 15px; 
-            border-radius: 12px; 
+            border-radius: 15px; 
             border: 1px solid #333; 
         }
         h1 { color: #ffcc00; font-size: 36px; text-align: center; margin: 10px 0; }
         h2 { color: #4bb5ff; font-size: 28px; margin-top: 30px; border-bottom: 1px solid #333; }
         
-        .setup-box { 
-            background: #1a1a1a; 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin-bottom: 20px; 
-        }
-        
-        /* Stacked inputs for mobile */
+        .setup-box { background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
-        .name-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+        .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
         input, select { 
             width: 100%;
             padding: 14px; 
-            font-size: 22px; /* iOS won't zoom if 16px+, 22px is better for visibility */
+            font-size: 22px; 
             border-radius: 8px; 
             border: 2px solid #444; 
             background: #fff; 
             color: #000; 
             font-weight: bold;
-            -webkit-appearance: none; /* Removes iOS default styling */
+            -webkit-appearance: none;
         }
 
         .player-card { 
@@ -63,40 +50,35 @@
             border-radius: 10px;
         }
         .winner-card { border-color: #4caf50; background: #0e2110; }
-
-        .row-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
+        .row-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 
         button { 
             width: 100%; 
-            padding: 20px; 
-            font-size: 24px; 
+            padding: 22px; 
+            font-size: 26px; 
             background: #0070f3; 
             color: white; 
             border: none; 
-            border-radius: 10px; 
+            border-radius: 12px; 
             font-weight: bold; 
-            margin-top: 10px;
+            margin-top: 15px;
+            box-shadow: 0 4px 0 #004aab;
         }
-        .secondary-btn { background: #b91c1c; margin-top: 40px; font-size: 18px; }
+        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #004aab; }
+        .secondary-btn { background: #b91c1c; margin-top: 50px; font-size: 18px; box-shadow: 0 4px 0 #7a1212; }
 
-        /* Scrollable Ledger for mobile */
-        .table-wrap { overflow-x: auto; margin-top: 20px; }
+        .table-wrap { overflow-x: auto; margin-top: 25px; }
         table { width: 100%; border-collapse: collapse; min-width: 400px; }
         th, td { padding: 12px; border: 1px solid #333; text-align: center; font-size: 20px; }
         th { background: #222; color: #ffcc00; }
-        .money { color: #00ff00; }
-        .debt { color: #ff4d4d; }
+        .money { color: #00ff00; font-weight: bold; }
+        .debt { color: #ff4d4d; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Big 2 Scorer</h1>
-        <div id="session-date" style="text-align:center; color:#888; font-size:16px;">Connecting...</div>
+        <div id="session-date" style="text-align:center; color:#888; font-size:16px;">Connecting to Firebase...</div>
         
         <div class="setup-box">
             <div class="input-group">
@@ -137,17 +119,18 @@
             </table>
         </div>
 
-        <button class="secondary-btn" onclick="resetSession()">RESET SESSION</button>
+        <button class="secondary-btn" onclick="resetSession()">RESET ALL DATA</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // Updated with your specific Singapore region URL
         const firebaseConfig = {
             apiKey: "AIzaSyCh9aJZ_exqVOvUeWXXlxwEXONTDcK-0Pc",
             authDomain: "big-2-scorer-2d3c1.firebaseapp.com",
-            databaseURL: "https://big-2-scorer-2d3c1-default-rtdb.firebaseio.com",
+            databaseURL: "https://big-2-scorer-2d3c1-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "big-2-scorer-2d3c1",
             storageBucket: "big-2-scorer-2d3c1.firebasestorage.app",
             messagingSenderId: "412428402739",
@@ -173,7 +156,7 @@
                 const isWin = i === winIdx;
                 html += `
                 <div class="player-card ${isWin ? 'winner-card' : ''}">
-                    <strong>${sessionData.names[i]} ${isWin ? '🏆' : ''}</strong>
+                    <strong style="font-size:24px">${sessionData.names[i]} ${isWin ? '🏆' : ''}</strong>
                     <div class="row-inputs">
                         <div>
                             <label style="font-size:14px">${isWin ? 'End 2s' : 'Cards'}</label>
@@ -202,8 +185,13 @@
             if (data) {
                 sessionData = data;
                 document.getElementById('point_val').value = sessionData.pointValue;
-                sessionData.names.forEach((n, i) => { document.getElementById('n' + (i + 1)).value = n; });
+                sessionData.names.forEach((n, i) => { 
+                    const el = document.getElementById('n' + (i + 1));
+                    if(el) el.value = n;
+                });
                 document.getElementById('session-date').innerText = "Started: " + sessionData.startTime;
+            } else {
+                document.getElementById('session-date').innerText = "Ready to start new session";
             }
             updateLedgerUI();
             renderInputs();
@@ -289,9 +277,12 @@
         }
 
         window.resetSession = function() {
-            if(confirm("Wipe all data?")) set(sessionRef, null).then(() => location.reload());
+            if(confirm("Wipe all data from the cloud?")) {
+                set(sessionRef, null).then(() => location.reload());
+            }
         };
 
+        // Initial render so the screen isn't blank
         renderInputs();
         updateLedgerUI();
     </script>
