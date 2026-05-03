@@ -1,61 +1,71 @@
-window.calculateHand = function() {
-            const winIdx = parseInt(document.getElementById('winner_idx').value);
-            let handPoints = [0, 0, 0, 0];
-            
-            // 1. Calculate Base Penalties
-            const winEndingTwos = parseInt(document.getElementById(`p${winIdx}_val`).value) || 0;
-            const winTwosBonus = winEndingTwos * 5;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Big 2</title>
+    <link rel="apple-touch-icon" href="https://img.freepik.com/premium-vector/two-spades-playing-card-isolated-black-background_1029473-58133.jpg?w=360">
+    <meta name="apple-mobile-web-app-title" content="Big 2">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; padding: 10px; background: #000; color: #fff; margin: 0; font-size: 16px; }
+        .container { max-width: 500px; margin: auto; background: #111; padding: 12px; border-radius: 12px; border: 1px solid #333; }
+        h1 { color: #ffcc00; font-size: 28px; text-align: center; margin: 5px 0; }
+        .history-box { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; display: flex; gap: 5px; flex-direction: column; }
+        .history-box label { font-size: 12px; color: #888; }
+        .setup-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 10px; background: #1a1a1a; padding: 8px; border-radius: 8px; }
+        .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        input, select { width: 100%; padding: 8px; font-size: 16px; border-radius: 6px; border: 1px solid #444; background: #fff; color: #000; font-weight: bold; }
+        #player-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .player-card { background: #222; border: 1px solid #444; padding: 8px; border-radius: 8px; }
+        .winner-card { border-color: #4caf50; background: #0e2110; }
+        .player-card strong { font-size: 14px; display: block; margin-bottom: 5px; color: #ffcc00; }
+        .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        .card-row label { font-size: 10px; color: #aaa; display: block; }
+        .special-select { font-size: 12px; padding: 4px; background: #eee; }
+        button { width: 100%; padding: 15px; font-size: 20px; background: #0070f3; color: white; border: none; border-radius: 10px; font-weight: bold; margin-top: 10px; }
+        .secondary-btn { background: #b91c1c; margin-top: 20px; font-size: 14px; padding: 10px; }
+        .table-wrap { overflow-x: auto; margin-top: 15px; background: #000; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 6px; border: 1px solid #333; text-align: center; }
+        th { background: #222; color: #ffcc00; }
+        .money { color: #00ff00; } .debt { color: #ff4d4d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Big 2</h1>
+        <div class="history-box">
+            <label>Select Session Date</label>
+            <input type="date" id="date-picker" onchange="loadDateSession()">
+        </div>
+        <div class="setup-row">
+            <div>
+                <label style="font-size:10px">$/Point</label>
+                <input type="number" id="point_val" value="1.00" step="0.10" onchange="syncToFirebase()">
+            </div>
+            <div class="name-grid">
+                <input type="text" id="n1" placeholder="P1" oninput="syncToFirebase()">
+                <input type="text" id="n2" placeholder="P2" oninput="syncToFirebase()">
+                <input type="text" id="n3" placeholder="P3" oninput="syncToFirebase()">
+                <input type="text" id="n4" placeholder="P4" oninput="syncToFirebase()">
+            </div>
+        </div>
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <span style="font-size:14px; color:#4bb5ff">Winner:</span>
+            <select id="winner_idx" style="width:60%; padding:5px" onchange="renderInputs()"></select>
+        </div>
+        <div id="player-inputs"></div>
+        <button onclick="calculateHand()">SUBMIT SCORE</button>
+        <div class="table-wrap">
+            <table id="ledger">
+                <thead id="ledger-head"></thead>
+                <tbody id="ledger-body"></tbody>
+                <tfoot id="ledger-foot"></tfoot>
+            </table>
+        </div>
+        <button class="secondary-btn" onclick="resetCurrentSession()">RESET SESSION</button>
+    </div>
 
-            for(let i=0; i<4; i++) {
-                if(i !== winIdx) {
-                    let cards = parseInt(document.getElementById(`p${i}_val`).value) || 0;
-                    let heldTwos = parseInt(document.getElementById(`p${i}_twos`).value) || 0;
-                    
-                    // Core point calculation (Cards + 5 per Held 2)
-                    let subtotal = cards + (heldTwos * 5);
-                    
-                    // Apply Multipliers based on card count
-                    if (cards === 13) {
-                        subtotal = subtotal * 3; // TRIPLE for 13 cards
-                    } else if (cards >= 10) {
-                        subtotal = subtotal * 2; // DOUBLE for 10-12 cards
-                    }
-
-                    // Add the Ante (5) + Winner's Ending 2s bonus (5 per 2)
-                    let totalPenalty = subtotal + 5 + winTwosBonus;
-                    
-                    handPoints[i] -= totalPenalty;
-                    handPoints[winIdx] += totalPenalty;
-                }
-            }
-
-            // 2. Card Differences (Loser vs Loser side-bets)
-            let cardsArr = [0,0,0,0];
-            for(let i=0; i<4; i++) {
-                if(i !== winIdx) cardsArr[i] = parseInt(document.getElementById(`p${i}_val`).value) || 0;
-            }
-            for(let i=0; i<4; i++) {
-                for(let j=0; j<4; j++) {
-                    if(cardsArr[i] > cardsArr[j]) {
-                        let diff = cardsArr[i] - cardsArr[j];
-                        handPoints[i] -= diff;
-                        handPoints[j] += diff;
-                    }
-                }
-            }
-
-            // 3. Specials Distribution
-            for(let i=0; i<4; i++) {
-                let specVal = parseInt(document.getElementById(`p${i}_special`).value) || 0;
-                if(specVal > 0) {
-                    for(let j=0; j<4; j++) {
-                        if(i !== j) { handPoints[j] -= specVal; handPoints[i] += specVal; }
-                    }
-                }
-            }
-
-            if(!sessionData.history) sessionData.history = [];
-            sessionData.history.push(handPoints);
-            handPoints.forEach((pts, i) => sessionData.totals[i] += pts);
-            syncToFirebase();
-        };
+    <script type="module">
+        import { initializeApp } from "https://www.
