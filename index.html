@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Big 2 Live Session - Firebase</title>
+    <title>Big 2 Cut-Throat Live</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
-        .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; }
+        .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; }
         h1, h2 { text-align: center; color: #4bb5ff; margin-bottom: 5px; }
         .timestamp { text-align: center; font-size: 0.8em; color: #777; margin-bottom: 20px; }
         .setup-box { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
@@ -26,7 +26,7 @@
 <body>
     <div class="container">
         <h1>Big 2 Live Session</h1>
-        <div id="session-date" class="timestamp">Connecting to Cloud...</div>
+        <div id="session-date" class="timestamp">Connecting to Firebase...</div>
         
         <div class="setup-box">
             <div class="input-group">
@@ -68,20 +68,20 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase Implementation -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // TODO: Replace with your actual Firebase config from the console!
+        // Your specific config from image_514e59.png
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyCh9aJZ_exqVOvUeWXXlxwEXONTDcK-0Pc",
+            authDomain: "big-2-scorer-2d3c1.firebaseapp.com",
+            databaseURL: "https://big-2-scorer-2d3c1-default-rtdb.firebaseio.com",
+            projectId: "big-2-scorer-2d3c1",
+            storageBucket: "big-2-scorer-2d3c1.firebasestorage.app",
+            messagingSenderId: "412428402739",
+            appId: "1:412428402739:web:329f77526f9dbeb61aa346"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -96,7 +96,7 @@
             history: []
         };
 
-        // Listen for Realtime Updates from any device
+        // Sync from Firebase
         onValue(sessionRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -109,13 +109,12 @@
                 updateLedgerUI();
                 renderInputs();
             } else {
-                // Initialize new session if DB is empty
-                syncToFirebase();
+                syncToFirebase(); // Initial setup if DB is empty
             }
         });
 
         window.syncToFirebase = function() {
-            sessionData.pointValue = parseFloat(document.getElementById('point_val').value);
+            sessionData.pointValue = parseFloat(document.getElementById('point_val').value) || 1.0;
             for(let i=0; i<4; i++) {
                 sessionData.names[i] = document.getElementById('n' + (i+1)).value || "Player " + (i+1);
             }
@@ -131,7 +130,7 @@
                 <div class="player-row ${isWinner ? 'winner-row' : ''}">
                     <strong>${sessionData.names[i]} ${isWinner ? '(Winner)' : ''}</strong>
                     <div class="input-group">
-                        ${!isWinner ? `Cards: <input type="number" id="p${i}_cards" class="card-input" value="0">` : `Last Move 2s: <input type="number" id="p${i}_w_twos" class="card-input" value="0">`}
+                        ${!isWinner ? `Cards: <input type="number" id="p${i}_cards" class="card-input" value="0">` : `Ending 2s: <input type="number" id="p${i}_w_twos" class="card-input" value="0">`}
                         2s Held: <input type="number" id="p${i}_twos" class="card-input" value="0">
                         Bonus: <select id="p${i}_special">
                             <option value="0">None</option>
@@ -159,7 +158,7 @@
 
             const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_w_twos`).value) || 0) * 5;
 
-            // Ante & 2s
+            // 1. Ante (5) + 2s Penalties
             for(let i=0; i<4; i++) {
                 if(i !== winIdx) {
                     let penalty = 5 + winTwosBonus + (twos[i] * 5);
@@ -168,7 +167,7 @@
                 }
             }
 
-            // Cut-throat Card Diffs
+            // 2. Cut-throat Card Differences
             for(let i=0; i<4; i++) {
                 for(let j=0; j<4; j++) {
                     if(cards[i] > cards[j]) {
@@ -179,7 +178,7 @@
                 }
             }
 
-            // Specials
+            // 3. Special Bonuses
             specials.forEach((pts, idx) => {
                 if(pts > 0) {
                     for(let i=0; i<4; i++) {
