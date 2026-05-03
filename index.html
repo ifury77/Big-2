@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Big 2 Cut-Throat Scorer</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 500px; margin: auto; }
+        .input-group { margin-bottom: 10px; }
+        input { width: 100%; padding: 8px; margin-top: 5px; }
+        button { padding: 10px; width: 100%; background: #0070f3; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Big 2 Scorer</h1>
+        <div id="setup">
+            <p>Enter cards remaining for losers:</p>
+            <div class="input-group">P2 Cards: <input type="number" id="p2" value="0"></div>
+            <div class="input-group">P3 Cards: <input type="number" id="p3" value="0"></div>
+            <div class="input-group">P4 Cards: <input type="number" id="p4" value="0"></div>
+            <button onclick="calculate()">Calculate Points</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculate() {
+            // This is where your specific points logic goes
+            const p2 = parseInt(document.getElementById('p2').value);
+            const p3 = parseInt(document.getElementById('p3').value);
+            const p4 = parseInt(document.getElementById('p4').value);
+            
+            // Logic for "Lesser Cards" and Ante (5 points)
+            // Winner gets 0, others pay 5 base + card differences
+            document.getElementById('result').innerHTML = "Calculation logic coming soon!";
+        }
+    </script>
+</body>
+</html>
