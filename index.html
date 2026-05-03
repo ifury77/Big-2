@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Big 2 Pro Scorer - Persistent</title>
+    <title>Big 2 Live Session - Firebase</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #121212; color: #e0e0e0; }
         .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 12px; }
@@ -25,19 +25,19 @@
 </head>
 <body>
     <div class="container">
-        <h1>Big 2 Session Manager</h1>
-        <div id="session-date" class="timestamp"></div>
+        <h1>Big 2 Live Session</h1>
+        <div id="session-date" class="timestamp">Connecting to Cloud...</div>
         
         <div class="setup-box">
             <div class="input-group">
-                Value per Point ($): <input type="number" id="point_val" value="1.00" step="0.10" onchange="saveSession()">
+                Value per Point ($): <input type="number" id="point_val" value="1.00" step="0.10" onchange="syncToFirebase()">
             </div>
             <div class="input-group">
                 Names: 
-                <input type="text" id="n1" class="name-input" placeholder="P1" onchange="saveSession()">
-                <input type="text" id="n2" class="name-input" placeholder="P2" onchange="saveSession()">
-                <input type="text" id="n3" class="name-input" placeholder="P3" onchange="saveSession()">
-                <input type="text" id="n4" class="name-input" placeholder="P4" onchange="saveSession()">
+                <input type="text" id="n1" class="name-input" placeholder="P1" onchange="syncToFirebase()">
+                <input type="text" id="n2" class="name-input" placeholder="P2" onchange="syncToFirebase()">
+                <input type="text" id="n3" class="name-input" placeholder="P3" onchange="syncToFirebase()">
+                <input type="text" id="n4" class="name-input" placeholder="P4" onchange="syncToFirebase()">
             </div>
         </div>
 
@@ -55,10 +55,10 @@
             <div id="player-inputs"></div>
         </div>
 
-        <button onclick="calculateHand()">Submit Hand</button>
+        <button onclick="calculateHand()">Submit Hand to Cloud</button>
         
         <div id="session-summary">
-            <h2>Running Ledger</h2>
+            <h2>Live Ledger</h2>
             <table id="ledger">
                 <thead id="ledger-head"></thead>
                 <tbody id="ledger-body"></tbody>
@@ -68,40 +68,61 @@
         </div>
     </div>
 
-    <script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // TODO: Replace with your actual Firebase config from the console!
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const sessionRef = ref(db, 'current_session');
+
         let sessionData = {
             startTime: new Date().toLocaleString(),
             pointValue: 1.0,
             names: ["Player 1", "Player 2", "Player 3", "Player 4"],
             totals: [0, 0, 0, 0],
-            history: [] // Stores individual hand results
+            history: []
         };
 
-        // Initialize App
-        window.onload = function() {
-            const saved = localStorage.getItem('big2_session');
-            if (saved) {
-                sessionData = JSON.parse(saved);
-                // Sync inputs with saved data
+        // Listen for Realtime Updates from any device
+        onValue(sessionRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                sessionData = data;
                 document.getElementById('point_val').value = sessionData.pointValue;
-                sessionData.names.forEach((name, i) => document.getElementById('n' + (i + 1)).value = name);
+                sessionData.names.forEach((name, i) => {
+                    document.getElementById('n' + (i + 1)).value = name;
+                });
+                document.getElementById('session-date').innerText = "Session Started: " + sessionData.startTime;
+                updateLedgerUI();
+                renderInputs();
+            } else {
+                // Initialize new session if DB is empty
+                syncToFirebase();
             }
-            document.getElementById('session-date').innerText = "Session Started: " + sessionData.startTime;
-            renderInputs();
-            updateLedgerUI();
-        };
+        });
 
-        function saveSession() {
+        window.syncToFirebase = function() {
             sessionData.pointValue = parseFloat(document.getElementById('point_val').value);
             for(let i=0; i<4; i++) {
                 sessionData.names[i] = document.getElementById('n' + (i+1)).value || "Player " + (i+1);
             }
-            localStorage.setItem('big2_session', JSON.stringify(sessionData));
-            renderInputs();
-            updateLedgerUI();
-        }
+            set(sessionRef, sessionData);
+        };
 
-        function renderInputs() {
+        window.renderInputs = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let html = "";
             for(let i=0; i<4; i++) {
@@ -121,9 +142,9 @@
                 </div>`;
             }
             document.getElementById('player-inputs').innerHTML = html;
-        }
+        };
 
-        function calculateHand() {
+        window.calculateHand = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let handPoints = [0, 0, 0, 0];
             let cards = [0, 0, 0, 0];
@@ -133,14 +154,12 @@
             for(let i=0; i<4; i++) {
                 twos[i] = parseInt(document.getElementById(`p${i}_twos`).value) || 0;
                 specials[i] = parseInt(document.getElementById(`p${i}_special`).value) || 0;
-                if (i !== winIdx) {
-                    cards[i] = parseInt(document.getElementById(`p${i}_cards`).value) || 0;
-                }
+                if (i !== winIdx) cards[i] = parseInt(document.getElementById(`p${i}_cards`).value) || 0;
             }
 
             const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_w_twos`).value) || 0) * 5;
 
-            // 1. Ante + 2s Penalties
+            // Ante & 2s
             for(let i=0; i<4; i++) {
                 if(i !== winIdx) {
                     let penalty = 5 + winTwosBonus + (twos[i] * 5);
@@ -149,7 +168,7 @@
                 }
             }
 
-            // 2. Cut-throat differences
+            // Cut-throat Card Diffs
             for(let i=0; i<4; i++) {
                 for(let j=0; j<4; j++) {
                     if(cards[i] > cards[j]) {
@@ -160,7 +179,7 @@
                 }
             }
 
-            // 3. Special Hand Bonuses
+            // Specials
             specials.forEach((pts, idx) => {
                 if(pts > 0) {
                     for(let i=0; i<4; i++) {
@@ -169,31 +188,30 @@
                 }
             });
 
-            // Save hand to history and update totals
+            if (!sessionData.history) sessionData.history = [];
             sessionData.history.push(handPoints);
             handPoints.forEach((pts, i) => sessionData.totals[i] += pts);
-            saveSession();
-        }
+            set(sessionRef, sessionData);
+        };
 
         function updateLedgerUI() {
-            // Header
             let head = `<tr><th>Hand</th>`;
             sessionData.names.forEach(n => head += `<th>${n}</th>`);
             document.getElementById('ledger-head').innerHTML = head + `</tr>`;
 
-            // Body (History)
             let bodyHtml = "";
-            sessionData.history.forEach((hand, idx) => {
-                bodyHtml += `<tr><td>#${idx+1}</td>`;
-                hand.forEach(pts => {
-                    let val = (pts * sessionData.pointValue).toFixed(2);
-                    bodyHtml += `<td class="${pts >= 0 ? 'money' : 'debt'}">$${val}</td>`;
+            if (sessionData.history) {
+                sessionData.history.forEach((hand, idx) => {
+                    bodyHtml += `<tr><td>#${idx+1}</td>`;
+                    hand.forEach(pts => {
+                        let val = (pts * sessionData.pointValue).toFixed(2);
+                        bodyHtml += `<td class="${pts >= 0 ? 'money' : 'debt'}">$${val}</td>`;
+                    });
+                    bodyHtml += `</tr>`;
                 });
-                bodyHtml += `</tr>`;
-            });
+            }
             document.getElementById('ledger-body').innerHTML = bodyHtml;
 
-            // Footer (Totals)
             let foot = `<tr><td><strong>Total</strong></td>`;
             sessionData.totals.forEach(t => {
                 let val = (t * sessionData.pointValue).toFixed(2);
@@ -202,12 +220,9 @@
             document.getElementById('ledger-foot').innerHTML = foot + `</tr>`;
         }
 
-        function resetSession() {
-            if(confirm("This will PERMANENTLY delete the session history. Continue?")) {
-                localStorage.removeItem('big2_session');
-                location.reload();
-            }
-        }
+        window.resetSession = function() {
+            if(confirm("Wipe Cloud Session?")) set(sessionRef, null);
+        };
     </script>
 </body>
 </html>
