@@ -12,8 +12,7 @@
         .container { max-width: 500px; margin: auto; background: #111; padding: 12px; border-radius: 12px; border: 1px solid #333; }
         h1 { color: #ffcc00; font-size: 28px; text-align: center; margin: 5px 0; }
         
-        /* Calendar Row */
-        .history-box { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; display: flex; gap: 8px; flex-direction: column; }
+        .history-box { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; display: flex; gap: 5px; flex-direction: column; }
         .history-box label { font-size: 12px; color: #888; }
         
         .setup-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 10px; background: #1a1a1a; padding: 8px; border-radius: 8px; }
@@ -27,10 +26,11 @@
         #player-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .player-card { background: #222; border: 1px solid #444; padding: 8px; border-radius: 8px; }
         .winner-card { border-color: #4caf50; background: #0e2110; }
-        .player-card strong { font-size: 14px; display: block; margin-bottom: 5px; }
-        .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .card-row label { font-size: 10px; color: #aaa; }
+        .player-card strong { font-size: 14px; display: block; margin-bottom: 5px; color: #ffcc00; }
+        .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        .card-row label { font-size: 10px; color: #aaa; display: block; }
         .card-row input { padding: 5px; font-size: 14px; }
+        .special-select { font-size: 12px; padding: 4px; background: #eee; }
 
         button { 
             width: 100%; padding: 15px; font-size: 20px; background: #0070f3; 
@@ -60,18 +60,17 @@
                 <input type="number" id="point_val" value="1.00" step="0.10" onchange="syncToFirebase()">
             </div>
             <div class="name-grid">
-                <input type="text" id="n1" placeholder="P1" onchange="syncToFirebase()">
-                <input type="text" id="n2" placeholder="P2" onchange="syncToFirebase()">
-                <input type="text" id="n3" placeholder="P3" onchange="syncToFirebase()">
-                <input type="text" id="n4" placeholder="P4" onchange="syncToFirebase()">
+                <input type="text" id="n1" placeholder="P1" oninput="syncToFirebase()">
+                <input type="text" id="n2" placeholder="P2" oninput="syncToFirebase()">
+                <input type="text" id="n3" placeholder="P3" oninput="syncToFirebase()">
+                <input type="text" id="n4" placeholder="P4" oninput="syncToFirebase()">
             </div>
         </div>
 
         <div style="display:flex; justify-content: space-between; align-items: center;">
             <span style="font-size:14px; color:#4bb5ff">Winner:</span>
             <select id="winner_idx" style="width:60%; padding:5px" onchange="renderInputs()">
-                <option value="0">Player 1</option><option value="1">Player 2</option>
-                <option value="2">Player 3</option><option value="3">Player 4</option>
+                <!-- Options populated by JS -->
             </select>
         </div>
         
@@ -105,7 +104,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // Default to today's date
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('date-picker').value = today;
 
@@ -113,14 +111,11 @@
 
         window.loadDateSession = function() {
             const selectedDate = document.getElementById('date-picker').value;
-            const currentRef = ref(db, 'sessions/' + selectedDate);
-            
-            onValue(currentRef, (snapshot) => {
+            onValue(ref(db, 'sessions/' + selectedDate), (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     sessionData = data;
                 } else {
-                    // Start fresh for new date
                     sessionData = { pointValue: 1.0, names: ["P1", "P2", "P3", "P4"], totals: [0,0,0,0], history: [] };
                 }
                 updateUIFields();
@@ -130,6 +125,12 @@
         function updateUIFields() {
             document.getElementById('point_val').value = sessionData.pointValue;
             sessionData.names.forEach((n, i) => document.getElementById('n' + (i + 1)).value = n);
+            
+            const winSelect = document.getElementById('winner_idx');
+            const currentWinIdx = winSelect.value || 0;
+            winSelect.innerHTML = sessionData.names.map((n, i) => `<option value="${i}">${n}</option>`).join('');
+            winSelect.value = currentWinIdx;
+
             updateLedgerUI();
             renderInputs();
         }
@@ -143,9 +144,15 @@
                 <div class="player-card ${isWin ? 'winner-card' : ''}">
                     <strong>${sessionData.names[i]} ${isWin ? '🏆' : ''}</strong>
                     <div class="card-row">
-                        <div><label>${isWin ? 'End2' : 'Cards'}</label><input type="number" id="p${i}_val" value="0"></div>
-                        <div><label>Held2</label><input type="number" id="p${i}_twos" value="0"></div>
+                        <div><label>${isWin ? 'End 2s' : 'Cards'}</label><input type="number" id="p${i}_val" value="0"></div>
+                        <div><label>Held 2s</label><input type="number" id="p${i}_twos" value="0"></div>
                     </div>
+                    <label style="font-size:10px; color:#aaa">Special Hand</label>
+                    <select id="p${i}_special" class="special-select">
+                        <option value="0">None</option>
+                        <option value="5">SF / 4-Kind (+5)</option>
+                        <option value="10">Royal Flush (+10)</option>
+                    </select>
                 </div>`;
             }
             document.getElementById('player-inputs').innerHTML = html;
@@ -157,27 +164,64 @@
             for(let i=0; i<4; i++) {
                 sessionData.names[i] = document.getElementById('n' + (i+1)).value || "P" + (i+1);
             }
+            
+            // Sync winner dropdown names without losing selection
+            const winSelect = document.getElementById('winner_idx');
+            const currentVal = winSelect.value;
+            winSelect.innerHTML = sessionData.names.map((n, i) => `<option value="${i}">${n}</option>`).join('');
+            winSelect.value = currentVal;
+            
             set(ref(db, 'sessions/' + selectedDate), sessionData);
+            updateLedgerUI();
         };
 
         window.calculateHand = function() {
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let handPoints = [0, 0, 0, 0];
+            
+            // 1. Base Ante (5 pts) and Winner's Ending 2s bonus
             const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_val`).value) || 0) * 5;
 
             for(let i=0; i<4; i++) {
                 if(i !== winIdx) {
                     let twos = parseInt(document.getElementById(`p${i}_twos`).value) || 0;
+                    // Every loser pays 5 (base) + 5 per winner's end-2 + 5 per their own held-2
                     let penalty = 5 + winTwosBonus + (twos * 5);
                     handPoints[i] -= penalty;
                     handPoints[winIdx] += penalty;
                 }
             }
+
+            // 2. Card Differences
+            let cards = [0,0,0,0];
+            for(let i=0; i<4; i++) {
+                if(i !== winIdx) cards[i] = parseInt(document.getElementById(`p${i}_val`).value) || 0;
+            }
+            for(let i=0; i<4; i++) {
+                for(let j=0; j<4; j++) {
+                    if(cards[i] > cards[j]) {
+                        let diff = cards[i] - cards[j];
+                        handPoints[i] -= diff;
+                        handPoints[j] += diff;
+                    }
+                }
+            }
+
+            // 3. Specials
+            for(let i=0; i<4; i++) {
+                let specVal = parseInt(document.getElementById(`p${i}_special`).value) || 0;
+                if(specVal > 0) {
+                    for(let j=0; j<4; j++) {
+                        if(i !== j) { handPoints[j] -= specVal; handPoints[i] += specVal; }
+                    }
+                }
+            }
+
             if(!sessionData.history) sessionData.history = [];
             sessionData.history.push(handPoints);
             handPoints.forEach((pts, i) => sessionData.totals[i] += pts);
             syncToFirebase();
-            updateLedgerUI();
+            renderInputs(); // Reset inputs for next hand
         };
 
         function updateLedgerUI() {
@@ -194,7 +238,6 @@
                 sessionData.history = [];
                 sessionData.totals = [0,0,0,0];
                 syncToFirebase();
-                updateLedgerUI();
             }
         };
 
