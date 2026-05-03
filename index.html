@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     
-    <!-- App Name and iOS Icon Support -->
+    <!-- Updated App Name and 2 of Spades Icon -->
     <title>Big 2</title>
-    <link rel="apple-touch-icon" href="https://img.freepik.com/premium-vector/poker-logo-design-vector-template-poker-club-logo-design-poker-labels-poker-emblems-vector-illustr_621051-512.jpg?w=360">
+    <link rel="apple-touch-icon" href="https://img.freepik.com/premium-vector/two-spades-playing-card-isolated-black-background_1029473-58133.jpg?w=360">
     <meta name="apple-mobile-web-app-title" content="Big 2">
     
     <style>
@@ -83,7 +83,7 @@
 <body>
     <div class="container">
         <h1>Big 2</h1>
-        <div id="session-date" style="text-align:center; color:#888; font-size:16px;">Connecting to Firebase...</div>
+        <div id="session-date" style="text-align:center; color:#888; font-size:16px;">Connecting...</div>
         
         <div class="setup-box">
             <div class="input-group">
@@ -194,8 +194,6 @@
                     if(el) el.value = n;
                 });
                 document.getElementById('session-date').innerText = "Started: " + sessionData.startTime;
-            } else {
-                document.getElementById('session-date').innerText = "Ready to start new session";
             }
             updateLedgerUI();
             renderInputs();
@@ -281,9 +279,7 @@
         }
 
         window.resetSession = function() {
-            if(confirm("Wipe all data from the cloud?")) {
-                set(sessionRef, null).then(() => location.reload());
-            }
+            if(confirm("Wipe all data?")) set(sessionRef, null).then(() => location.reload());
         };
 
         renderInputs();
