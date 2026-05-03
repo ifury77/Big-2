@@ -10,10 +10,12 @@
         * { box-sizing: border-box; }
         body { font-family: -apple-system, sans-serif; padding: 10px; background: #000; color: #fff; margin: 0; font-size: 16px; }
         .container { max-width: 500px; margin: auto; background: #111; padding: 12px; border-radius: 12px; border: 1px solid #333; }
-        
         h1 { color: #ffcc00; font-size: 28px; text-align: center; margin: 5px 0; }
         
-        /* Compact Setup Row */
+        /* Calendar Row */
+        .history-box { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; display: flex; gap: 8px; flex-direction: column; }
+        .history-box label { font-size: 12px; color: #888; }
+        
         .setup-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 10px; background: #1a1a1a; padding: 8px; border-radius: 8px; }
         .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         
@@ -22,13 +24,8 @@
             border: 1px solid #444; background: #fff; color: #000; font-weight: bold;
         }
 
-        /* Compact History Selector */
-        .history-box { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .history-box label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; }
-
-        /* Compact Player Cards */
         #player-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .player-card { background: #222; border: 1px solid #444; padding: 8px; border-radius: 8px; position: relative; }
+        .player-card { background: #222; border: 1px solid #444; padding: 8px; border-radius: 8px; }
         .winner-card { border-color: #4caf50; background: #0e2110; }
         .player-card strong { font-size: 14px; display: block; margin-bottom: 5px; }
         .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
@@ -53,10 +50,8 @@
         <h1>Big 2</h1>
 
         <div class="history-box">
-            <label>Past Sessions (MPS Style History)</label>
-            <select id="session-selector" onchange="switchSession()">
-                <option value="new">-- Start New Session --</option>
-            </select>
+            <label>Select Session Date</label>
+            <input type="date" id="date-picker" onchange="loadDateSession()">
         </div>
         
         <div class="setup-row">
@@ -81,7 +76,6 @@
         </div>
         
         <div id="player-inputs"></div>
-
         <button onclick="calculateHand()">SUBMIT SCORE</button>
         
         <div class="table-wrap">
@@ -91,13 +85,12 @@
                 <tfoot id="ledger-foot"></tfoot>
             </table>
         </div>
-
-        <button class="secondary-btn" onclick="resetCurrentSession()">RESET CURRENT SESSION</button>
+        <button class="secondary-btn" onclick="resetCurrentSession()">RESET SESSION</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCh9aJZ_exqVOvUeWXXlxwEXONTDcK-0Pc",
@@ -111,55 +104,34 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const allSessionsRef = ref(db, 'sessions');
         
-        let currentSessionId = localStorage.getItem('lastSessionId') || null;
+        // Default to today's date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date-picker').value = today;
+
         let sessionData = { pointValue: 1.0, names: ["P1", "P2", "P3", "P4"], totals: [0,0,0,0], history: [] };
 
-        // Load History List
-        onValue(allSessionsRef, (snapshot) => {
-            const sessions = snapshot.val();
-            const selector = document.getElementById('session-selector');
-            selector.innerHTML = '<option value="new">-- Start New Session --</option>';
+        window.loadDateSession = function() {
+            const selectedDate = document.getElementById('date-picker').value;
+            const currentRef = ref(db, 'sessions/' + selectedDate);
             
-            if (sessions) {
-                Object.keys(sessions).reverse().forEach(id => {
-                    const option = document.createElement('option');
-                    option.value = id;
-                    option.text = sessions[id].startTime || id;
-                    if(id === currentSessionId) option.selected = true;
-                    selector.appendChild(option);
-                });
-            }
-        });
-
-        window.switchSession = function() {
-            const val = document.getElementById('session-selector').value;
-            if (val === "new") {
-                const newId = new Date().toLocaleString().replace(/[/, :]/g, '-');
-                currentSessionId = newId;
-                sessionData = { startTime: new Date().toLocaleString(), pointValue: 1.0, names: ["P1", "P2", "P3", "P4"], totals: [0,0,0,0], history: [] };
-                saveAndRefetch();
-            } else {
-                currentSessionId = val;
-                saveAndRefetch();
-            }
-            localStorage.setItem('lastSessionId', currentSessionId);
-        };
-
-        function saveAndRefetch() {
-            if (!currentSessionId) return;
-            const currentRef = ref(db, 'sessions/' + currentSessionId);
             onValue(currentRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     sessionData = data;
-                    document.getElementById('point_val').value = sessionData.pointValue;
-                    sessionData.names.forEach((n, i) => document.getElementById('n' + (i + 1)).value = n);
-                    updateLedgerUI();
-                    renderInputs();
+                } else {
+                    // Start fresh for new date
+                    sessionData = { pointValue: 1.0, names: ["P1", "P2", "P3", "P4"], totals: [0,0,0,0], history: [] };
                 }
-            });
+                updateUIFields();
+            }, { onlyOnce: true });
+        };
+
+        function updateUIFields() {
+            document.getElementById('point_val').value = sessionData.pointValue;
+            sessionData.names.forEach((n, i) => document.getElementById('n' + (i + 1)).value = n);
+            updateLedgerUI();
+            renderInputs();
         }
 
         window.renderInputs = function() {
@@ -180,16 +152,15 @@
         };
 
         window.syncToFirebase = function() {
-            if (!currentSessionId) switchSession();
+            const selectedDate = document.getElementById('date-picker').value;
             sessionData.pointValue = parseFloat(document.getElementById('point_val').value) || 1.0;
             for(let i=0; i<4; i++) {
                 sessionData.names[i] = document.getElementById('n' + (i+1)).value || "P" + (i+1);
             }
-            set(ref(db, 'sessions/' + currentSessionId), sessionData);
+            set(ref(db, 'sessions/' + selectedDate), sessionData);
         };
 
         window.calculateHand = function() {
-            if (!currentSessionId) switchSession();
             const winIdx = parseInt(document.getElementById('winner_idx').value);
             let handPoints = [0, 0, 0, 0];
             const winTwosBonus = (parseInt(document.getElementById(`p${winIdx}_val`).value) || 0) * 5;
@@ -202,9 +173,11 @@
                     handPoints[winIdx] += penalty;
                 }
             }
+            if(!sessionData.history) sessionData.history = [];
             sessionData.history.push(handPoints);
             handPoints.forEach((pts, i) => sessionData.totals[i] += pts);
             syncToFirebase();
+            updateLedgerUI();
         };
 
         function updateLedgerUI() {
@@ -217,14 +190,15 @@
         }
 
         window.resetCurrentSession = function() {
-            if(confirm("Clear this session?")) {
+            if(confirm("Clear this day's session?")) {
                 sessionData.history = [];
                 sessionData.totals = [0,0,0,0];
                 syncToFirebase();
+                updateLedgerUI();
             }
         };
 
-        if(currentSessionId) saveAndRefetch();
+        loadDateSession();
     </script>
 </body>
 </html>
